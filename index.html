@@ -363,10 +363,10 @@ input:focus,textarea:focus{outline:none}
 </head>
 <body>
 
-<div id="loading"><div class="spin"></div><p>Chargement…</p></div>
+<div id="loading" style="display:none"><div class="spin"></div><p>Chargement…</p></div>
 
-<!-- AUTH -->
-<div class="page" id="authPage">
+<!-- AUTH (affiché par défaut, JS prend le relais ensuite) -->
+<div class="page active" id="authPage">
   <div class="auth-card">
     <div class="auth-logo"><span>💬</span><h1 id="authTitle">ChatRoom</h1><p>Discutez avec vos amis</p></div>
     <div class="auth-tabs">
@@ -385,6 +385,20 @@ input:focus,textarea:focus{outline:none}
       <button class="btn-main" id="rgBtn" onclick="doRegister()">Créer mon compte →</button>
     </div>
     <div class="auth-err" id="authErr"></div>
+    <div id="firebaseHelp" style="display:none;margin-top:14px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:12px;padding:14px;font-size:12px;color:#fca5a5;line-height:1.7">
+      <strong style="color:#f87171">🔧 Comment corriger les règles Firebase :</strong><br>
+      1. Va sur <strong>console.firebase.google.com</strong><br>
+      2. Sélectionne ton projet → <strong>Realtime Database</strong><br>
+      3. Clique sur l'onglet <strong>Règles</strong><br>
+      4. Remplace tout par :<br>
+      <code style="display:block;background:rgba(0,0,0,.3);border-radius:6px;padding:8px;margin:6px 0;color:#a5f3fc;font-size:11px">{
+  "rules": {
+    ".read": true,
+    ".write": true
+  }
+}</code>
+      5. Clique <strong>Publier</strong> — et retente la connexion !
+    </div>
   </div>
 </div>
 
@@ -729,21 +743,8 @@ var APPS = [
    INIT
 ══════════════════════════════ */
 var _loadTimer = null;
-window.addEventListener('load', function(){
-  // Timeout de sécurité : si Firebase ne répond pas en 7s → page de connexion
-  _loadTimer = setTimeout(function(){
-    if(document.getElementById('loading').style.display!=='none'){
-      document.getElementById('loading').style.display='none';
-      showPage('authPage');
-    }
-  }, 7000);
 
-  db.ref('users/joaquim_2detension').once('value').then(function(s){
-    if(!s.exists()) db.ref('users/joaquim_2detension').set({id:'joaquim_2detension',password:'motdepasse2',role:'admin',online:false,blocked:false,createdAt:Date.now()});
-  });
-  db.ref('settings').once('value').then(function(s){
-    if(!s.exists()) db.ref('settings').set({siteName:'ChatRoom',welcomeMsg:'Bienvenue sur ChatRoom ! 👋'});
-  });
+function setupGlobalListeners(){
   db.ref('settings').on('value',function(s){
     if(s.exists()){
       settingsCache=s.val();
@@ -756,23 +757,44 @@ window.addEventListener('load', function(){
   db.ref('users').on('value',function(s){usersCache=s.exists()?s.val():{};if(CU){refreshFriendList();if(document.getElementById('homePage').classList.contains('active'))renderHomeFriends();}});
   db.ref('groups').on('value',function(s){groupsCache=s.exists()?s.val():{};if(CU){refreshGroupList();updateAppBadges();}});
   db.ref('msgCounts').on('value',function(s){msgCountsCache=s.exists()?s.val():{};if(CU){refreshGroupList();refreshFriendList();updateAppBadges();}});
+}
 
-  var saved=sessionStorage.getItem(SESSION_KEY);
-  if(saved){
-    try{
-      var d=JSON.parse(saved);
-      db.ref('users/'+d.id).once('value').then(function(s){
-        if(s.exists()&&s.val().password===d.pw&&!s.val().blocked){
-          CU=s.val();CU.lastSeen={};
-          db.ref('users/'+d.id+'/lastSeen').once('value').then(function(ls){
-            if(ls.exists())CU.lastSeen=ls.val();
-            db.ref('users/'+d.id+'/online').set(true);
-            enterApp();
-          }).catch(function(){db.ref('users/'+d.id+'/online').set(true);enterApp();});
-        } else showAuth();
-      }).catch(function(){showAuth();});
-    }catch(e){showAuth();}
-  } else showAuth();
+window.addEventListener('load', function(){
+  var saved = sessionStorage.getItem(SESSION_KEY);
+
+  /* Pas de session → auth déjà visible par défaut, rien à faire */
+  if(!saved){ return; }
+
+  /* Session trouvée → afficher le loading, timeout 5s */
+  document.getElementById('loading').style.display='flex';
+  showPage('loadingPlaceholder'); /* cache authPage pendant la vérif */
+  document.getElementById('authPage').classList.remove('active');
+
+  _loadTimer = setTimeout(function(){ showAuth(); }, 5000);
+
+  try{
+    var d = JSON.parse(saved);
+    if(!d.id||!d.pw){ showAuth(); return; }
+    db.ref('users/'+d.id).once('value').then(function(s){
+      if(s.exists()&&s.val().password===d.pw&&!s.val().blocked){
+        CU=s.val(); CU.lastSeen={};
+        db.ref('users/'+d.id+'/online').set(true);
+        db.ref('users/'+d.id+'/lastSeen').once('value').then(function(ls){
+          if(ls.exists())CU.lastSeen=ls.val();
+          setupGlobalListeners();
+          enterApp();
+        }).catch(function(){ setupGlobalListeners(); enterApp(); });
+      } else { showAuth(); }
+    }).catch(function(){ showAuth(); });
+  }catch(e){ showAuth(); }
+
+  /* Créer le compte admin et settings par défaut */
+  db.ref('users/joaquim_2detension').once('value').then(function(s){
+    if(!s.exists()) db.ref('users/joaquim_2detension').set({id:'joaquim_2detension',password:'motdepasse2',role:'admin',online:false,blocked:false,createdAt:Date.now()});
+  });
+  db.ref('settings').once('value').then(function(s){
+    if(!s.exists()) db.ref('settings').set({siteName:'ChatRoom',welcomeMsg:'Bienvenue sur ChatRoom ! 👋'});
+  });
 });
 
 function loadLastSeenAndEnter(){
@@ -783,7 +805,11 @@ function loadLastSeenAndEnter(){
   }).catch(function(){enterApp();});
 }
 
-function showAuth(){if(_loadTimer){clearTimeout(_loadTimer);_loadTimer=null;}document.getElementById('loading').style.display='none';showPage('authPage');}
+function showAuth(){
+  if(_loadTimer){clearTimeout(_loadTimer);_loadTimer=null;}
+  document.getElementById('loading').style.display='none';
+  showPage('authPage');
+}
 function showPage(id){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});document.getElementById(id).classList.add('active');}
 
 /* ══════════════════════════════
@@ -801,16 +827,41 @@ function doLogin(){
   var id=document.getElementById('liU').value.trim();
   var pw=document.getElementById('liP').value;
   if(!id||!pw){authErr('Remplis tous les champs.');return;}
-  var btn=document.getElementById('liBtn');btn.disabled=true;btn.textContent='…';
+  var btn=document.getElementById('liBtn');
+  btn.disabled=true;btn.textContent='Connexion…';
+  authErr('');
+
+  // Timeout 8s si Firebase ne répond pas
+  var done=false;
+  var timer=setTimeout(function(){
+    if(done)return;done=true;
+    btn.disabled=false;btn.textContent='Se connecter →';
+    authErr('⚠️ Firebase ne répond pas. Vérifie les règles de ta base de données (voir ci-dessous).');
+    document.getElementById('firebaseHelp').style.display='block';
+  },8000);
+
   db.ref('users/'+id).once('value').then(function(s){
+    if(done)return;done=true;clearTimeout(timer);
     btn.disabled=false;btn.textContent='Se connecter →';
     if(!s.exists()||s.val().password!==pw){authErr('Identifiant ou mot de passe incorrect.');return;}
-    if(s.val().blocked){authErr('❌ Ton compte est bloqué. Contacte un administrateur.');return;}
+    if(s.val().blocked){authErr('❌ Ton compte est bloqué.');return;}
     CU=s.val();CU.lastSeen={};
     db.ref('users/'+id+'/online').set(true);
     sessionStorage.setItem(SESSION_KEY,JSON.stringify({id:id,pw:pw}));
-    db.ref('users/'+id+'/lastSeen').once('value').then(function(ls){if(ls.exists())CU.lastSeen=ls.val();enterApp();}).catch(function(){enterApp();});
-  }).catch(function(e){btn.disabled=false;btn.textContent='Se connecter →';authErr('Erreur : '+e.message);});
+    db.ref('users/'+id+'/lastSeen').once('value').then(function(ls){
+      if(ls.exists())CU.lastSeen=ls.val();
+      setupGlobalListeners();enterApp();
+    }).catch(function(){setupGlobalListeners();enterApp();});
+  }).catch(function(e){
+    if(done)return;done=true;clearTimeout(timer);
+    btn.disabled=false;btn.textContent='Se connecter →';
+    if(e.code==='PERMISSION_DENIED'||String(e).includes('permission')){
+      authErr('❌ Accès refusé par Firebase. Corrige les règles (voir ci-dessous).');
+      document.getElementById('firebaseHelp').style.display='block';
+    } else {
+      authErr('Erreur : '+(e.message||e));
+    }
+  });
 }
 
 function doRegister(){
@@ -819,22 +870,49 @@ function doRegister(){
   var pw2=document.getElementById('rgP2').value;
   if(!id||!pw||!pw2){authErr('Remplis tous les champs.');return;}
   if(pw!==pw2){authErr('Mots de passe différents.');return;}
-  if(id.length<3){authErr('Pseudo trop court (min 3).');return;}
-  if(!/^[a-zA-Z0-9_]+$/.test(id)){authErr('Pseudo : lettres, chiffres, _ uniquement.');return;}
-  var btn=document.getElementById('rgBtn');btn.disabled=true;btn.textContent='…';
+  if(id.length<3){authErr('Pseudo trop court (min 3 caractères).');return;}
+  if(!/^[a-zA-Z0-9_]+$/.test(id)){authErr('Pseudo : lettres, chiffres et _ uniquement.');return;}
+  var btn=document.getElementById('rgBtn');
+  btn.disabled=true;btn.textContent='Création…';
+  authErr('');
+
+  var done=false;
+  var timer=setTimeout(function(){
+    if(done)return;done=true;
+    btn.disabled=false;btn.textContent='Créer mon compte →';
+    authErr('⚠️ Firebase ne répond pas. Vérifie les règles de ta base de données (voir ci-dessous).');
+    document.getElementById('firebaseHelp').style.display='block';
+  },8000);
+
   db.ref('users/'+id).once('value').then(function(s){
-    if(s.exists()){btn.disabled=false;btn.textContent='Créer mon compte →';authErr('Ce pseudo est déjà pris.');return;}
+    if(done)return;
+    if(s.exists()){done=true;clearTimeout(timer);btn.disabled=false;btn.textContent='Créer mon compte →';authErr('Ce pseudo est déjà pris.');return;}
     var now=Date.now();
     db.ref('users/'+id).set({id:id,password:pw,role:'user',online:true,blocked:false,createdAt:now}).then(function(){
+      if(done)return;done=true;clearTimeout(timer);
       db.ref('friendships/joaquim_2detension/'+id).set(true);
       db.ref('friendships/'+id+'/joaquim_2detension').set(true);
-      pushNotif('joaquim_2detension','friend_auto',{from:id,text:id+' vient de s\'inscrire — ajouté automatiquement en ami.'});
+      pushNotif('joaquim_2detension','friend_auto',{from:id,text:id+' vient de s\'inscrire.'});
       CU={id:id,password:pw,role:'user',online:true,blocked:false,createdAt:now,lastSeen:{}};
       sessionStorage.setItem(SESSION_KEY,JSON.stringify({id:id,pw:pw}));
       btn.disabled=false;btn.textContent='Créer mon compte →';
-      enterApp();
+      setupGlobalListeners();enterApp();
+    }).catch(function(e){
+      if(done)return;done=true;clearTimeout(timer);
+      btn.disabled=false;btn.textContent='Créer mon compte →';
+      authErr('Erreur écriture : '+(e.message||e));
+      document.getElementById('firebaseHelp').style.display='block';
     });
-  }).catch(function(e){btn.disabled=false;btn.textContent='Créer mon compte →';authErr('Erreur : '+e.message);});
+  }).catch(function(e){
+    if(done)return;done=true;clearTimeout(timer);
+    btn.disabled=false;btn.textContent='Créer mon compte →';
+    if(e.code==='PERMISSION_DENIED'||String(e).includes('permission')){
+      authErr('❌ Accès refusé par Firebase. Corrige les règles (voir ci-dessous).');
+      document.getElementById('firebaseHelp').style.display='block';
+    } else {
+      authErr('Erreur : '+(e.message||e));
+    }
+  });
 }
 document.getElementById('liP').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 
