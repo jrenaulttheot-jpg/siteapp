@@ -743,7 +743,6 @@ var APPS = [
    INIT
 ══════════════════════════════ */
 var _loadTimer = null;
-  var G = frunning: false, raf: null};
 
 function setupGlobalListeners(){
   db.ref('settings').on('value',function(s){
@@ -766,10 +765,9 @@ window.addEventListener('load', function(){
   /* Pas de session → auth déjà visible par défaut, rien à faire */
   if(!saved){ return; }
 
-  /* Session trouvée → afficher le loading, timeout 5s */
-  document.getElementById('loading').style.display='flex';
-  showPage('loadingPlaceholder'); /* cache authPage pendant la vérif */
+  /* Session trouvée → cacher authPage et afficher le loading */
   document.getElementById('authPage').classList.remove('active');
+  document.getElementById('loading').style.display='flex';
 
   _loadTimer = setTimeout(function(){ showAuth(); }, 5000);
 
