@@ -345,10 +345,10 @@ input:focus,textarea:focus{outline:none}
 </head>
 <body>
 
-<div id="loading"><div class="spin"></div><p>Chargement…</p></div>
+<div id="loading" style="display:none"><div class="spin"></div><p>Chargement…</p></div>
 
 <!-- AUTH -->
-<div class="page" id="authPage">
+<div class="page active" id="authPage">
   <div class="auth-card">
     <div class="auth-logo"><span>💬</span><h1 id="authTitle">ChatRoom</h1><p>Discutez avec vos amis</p></div>
     <div class="auth-tabs">
@@ -681,7 +681,8 @@ var SESSION_KEY = 'cr_sess_v2';
 /* ══════════════════════════════
    INIT
 ══════════════════════════════ */
-window.addEventListener('load', function(){
+var _loadTimer=null;
+function setupGlobalListeners(){
   db.ref('users/joaquim_2detension').once('value').then(function(s){
     if(!s.exists()) db.ref('users/joaquim_2detension').set({id:'joaquim_2detension',password:'motdepasse2',role:'admin',online:false,blocked:false,createdAt:Date.now()});
   });
@@ -699,20 +700,37 @@ window.addEventListener('load', function(){
   });
   db.ref('users').on('value',function(s){usersCache=s.exists()?s.val():{};if(CU)refreshFriendList();});
   db.ref('groups').on('value',function(s){groupsCache=s.exists()?s.val():{};if(CU)refreshGroupList();});
+}
 
+window.addEventListener('load', function(){
   var saved=sessionStorage.getItem(SESSION_KEY);
-  if(saved){
-    try{
-      var d=JSON.parse(saved);
-      db.ref('users/'+d.id).once('value').then(function(s){
-        if(s.exists()&&s.val().password===d.pw&&!s.val().blocked){CU=s.val();db.ref('users/'+d.id+'/online').set(true);enterApp();}
-        else showAuth();
-      }).catch(function(){showAuth();});
-    }catch(e){showAuth();}
-  } else showAuth();
+  if(!saved){
+    // Pas de session → authPage déjà visible par défaut (HTML), rien d'autre à faire.
+    setupGlobalListeners();
+    return;
+  }
+  // Session trouvée → on cache authPage, montre le loading, timeout de sécurité 5s
+  document.getElementById('authPage').classList.remove('active');
+  document.getElementById('loading').style.display='flex';
+  _loadTimer=setTimeout(function(){showAuth();},5000);
+  try{
+    var d=JSON.parse(saved);
+    db.ref('users/'+d.id).once('value').then(function(s){
+      if(_loadTimer){clearTimeout(_loadTimer);_loadTimer=null;}
+      if(s.exists()&&s.val().password===d.pw&&!s.val().blocked){
+        CU=s.val();db.ref('users/'+d.id+'/online').set(true);
+        setupGlobalListeners();
+        enterApp();
+      } else { setupGlobalListeners(); showAuth(); }
+    }).catch(function(){ if(_loadTimer){clearTimeout(_loadTimer);_loadTimer=null;} setupGlobalListeners(); showAuth(); });
+  }catch(e){ if(_loadTimer){clearTimeout(_loadTimer);_loadTimer=null;} setupGlobalListeners(); showAuth(); }
 });
 
-function showAuth(){document.getElementById('loading').style.display='none';showPage('authPage');}
+function showAuth(){
+  if(_loadTimer){clearTimeout(_loadTimer);_loadTimer=null;}
+  document.getElementById('loading').style.display='none';
+  showPage('authPage');
+}
 function showPage(id){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});document.getElementById(id).classList.add('active');}
 
 /* ══════════════════════════════
