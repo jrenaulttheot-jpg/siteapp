@@ -1827,7 +1827,7 @@ function listenNotif(){
 /* ══════════════════════════════
    BATTLE ROYALE
 ══════════════════════════════ */
-var G={running:false,canvas:null,ctx:null,raf:null,W:2400,H:2400,cam:{x:0,y:0},player:null,bots:[],bullets:[],loot:[],storm:{cx:1200,cy:1200,r:1600,phase:0,timer:0,shrinkDur:45,startR:1600,endR:1050},kills:0,alive:16,coins:0,keys:{},joy:{active:false,id:-1,bx:0,by:0,dx:0,dy:0},aim:{firing:false,id:-1,ax:0,ay:0},skin:'#6d28d9',lastT:0,multi:false,lobbyId:null,isHost:false,teamsOn:false,myTeam:0,remotePlayers:{},syncBots:{},syncInterval:null,playersListenerRef:null,botsListenerRef:null,ended:false};
+var G={running:false,canvas:null,ctx:null,raf:null,W:2400,H:2400,cam:{x:0,y:0},player:null,bots:[],bullets:[],loot:[],storm:{cx:1200,cy:1200,r:1600,phase:0,timer:0,shrinkDur:45,startR:1600,endR:1050},kills:0,alive:16,coins:0,keys:{},joy:{active:false,id:-1,bx:0,by:0,dx:0,dy:0},aim:{firing:false,id:-1,ax:0,ay:0},skin:'#6d28d9',lastT:0,multi:false,lobbyId:null,isHost:false,teamsOn:false,myTeam:0,remotePlayers:{},syncBots:{},syncInterval:null,playersListenerRef:null,botsListenerRef:null,ended:false,expectedMembers:[],expectedBotCount:0,matchStartTime:0};
 var STORM_PHASES=[[1600,45],[1050,35],[600,28],[280,20],[100,0]];
 var BOT_COLORS=['#ef4444','#f97316','#eab308','#22c55e','#06b6d4','#3b82f6','#8b5cf6','#ec4899','#14b8a6','#f59e0b','#84cc16','#a855f7','#f43f5e','#0ea5e9','#10b981'];
 var SKINS=[
@@ -2048,12 +2048,21 @@ function gUpdateMulti(dt){
 
   if(p.hp<=0&&p.alive){p.alive=false;}
 
-  // recalcule le nombre de joueurs vivants
-  var alivePlayers=gAllMultiPlayers().filter(function(pl){return pl.alive!==false&&pl.hp>0;}).length;
-  var aliveBots=Object.keys(G.syncBots||{}).filter(function(idx){return G.syncBots[idx]&&G.syncBots[idx].alive!==false;}).length;
+  // recalcule le nombre de joueurs vivants (en se basant sur les membres ATTENDUS,
+  // pas seulement ceux déjà synchronisés, pour éviter une fausse victoire au lancement)
+  var alivePlayers=0;
+  G.expectedMembers.forEach(function(uid){
+    if(uid===CU.id){if(p.alive)alivePlayers++;return;}
+    var rp=G.remotePlayers[uid];
+    if(!rp||rp.alive!==false)alivePlayers++; // pas encore de données = considéré vivant
+  });
+  var deadBotsKnown=Object.keys(G.syncBots||{}).filter(function(idx){return G.syncBots[idx]&&G.syncBots[idx].alive===false;}).length;
+  var aliveBots=Math.max(0,G.expectedBotCount-deadBotsKnown);
   G.alive=alivePlayers+aliveBots;
 
-  if(!G.ended){
+  // délai de grâce de 3s avant de pouvoir déclarer une fin de partie (le temps que la synchro arrive)
+  var graceOver=(Date.now()-G.matchStartTime)>3000;
+  if(!G.ended&&graceOver){
     if(!p.alive){G.ended=true;endMultiGame();return;}
     if(G.alive<=1&&p.alive){G.ended=true;endMultiGame();return;}
   }
@@ -2344,6 +2353,9 @@ function startMultiGame(lobbyId,lobbyData){
   G.isHost=lobbyData.host===CU.id;
   G.teamsOn=!!lobbyData.teams;
   var memberIds=Object.keys(lobbyData.members||{});
+  G.expectedMembers=memberIds.slice();
+  G.expectedBotCount=lobbyData.bots?Math.max(0,16-memberIds.length):0;
+  G.matchStartTime=Date.now();
   var myIdx=memberIds.indexOf(CU.id);
   G.myTeam=G.teamsOn?((myIdx%2)+1):0;
   var spawnAngle=(myIdx/Math.max(1,memberIds.length))*Math.PI*2;
