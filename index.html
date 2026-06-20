@@ -370,27 +370,6 @@ input:focus,textarea:focus{outline:none}
   </div>
 </div>
 
-<!-- SEARCH PAGE -->
-<div class="page" id="searchPage" style="flex-direction:column;background:var(--bg)">
-  <div class="home-top">
-    <button class="h-ibtn" onclick="backToHome()" title="Accueil">🏠</button>
-    <span style="flex:1"></span>
-  </div>
-  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:20px">
-    <div style="font-size:46px;font-weight:800;letter-spacing:-1px">
-      <span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span>
-    </div>
-    <form onsubmit="doWebSearch(event)" style="width:100%;max-width:480px;display:flex;gap:10px">
-      <input id="searchInput" type="text" placeholder="Rechercher sur le web…" autocomplete="off"
-        style="flex:1;background:var(--s1);border:1px solid var(--border);border-radius:24px;padding:13px 20px;color:var(--text);font-size:15px;font-family:'Sora',sans-serif;outline:none"/>
-      <button type="submit" class="h-ibtn" style="width:46px;height:46px;border-radius:50%;font-size:18px">🔍</button>
-    </form>
-    <p style="color:var(--muted);font-size:11px;text-align:center;max-width:340px;line-height:1.6">
-      La recherche s'ouvre dans un nouvel onglet (Google ne peut pas s'afficher directement dans une autre page web).
-    </p>
-  </div>
-</div>
-
 <!-- HOME PAGE -->
 <div class="page" id="homePage">
   <div class="home-top">
@@ -455,6 +434,57 @@ input:focus,textarea:focus{outline:none}
     <p id="goCoins" style="color:#fcd34d;font-weight:700;font-size:15px"></p>
     <button class="btn-main" style="max-width:200px" onclick="startGame()">🔄 Rejouer</button>
     <button class="btn btn-ghost" onclick="leaveGame()">🏠 Accueil</button>
+  </div>
+</div>
+
+<!-- DASH PAGE (Bloc Dash) -->
+<div class="page" id="dashPage" style="flex-direction:column;background:#0a0a14;position:relative;overflow:hidden">
+  <div class="game-top">
+    <button class="hbtn" onclick="leaveDash()" style="flex-shrink:0">← Accueil</button>
+    <span style="flex:1;font-weight:700;font-size:14px;text-align:center">🔺 Bloc Dash</span>
+    <span id="dashCoinsDisplay" style="font-size:13px;color:#fcd34d;font-weight:700;flex-shrink:0">💰 0</span>
+  </div>
+  <canvas id="dashCanvas"></canvas>
+  <div id="dashHud" style="position:absolute;top:60px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:6px 16px;font-size:13px;font-weight:700;display:none;text-align:center;white-space:nowrap">
+    <div><span id="dashDist">0 m</span></div>
+    <div style="font-size:10px;font-weight:600;color:#fcd34d;margin-top:2px" id="dashBestDisp">Best: 0 m</div>
+  </div>
+  <div id="dashStartScreen" style="position:absolute;inset:50px 0 0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center;overflow-y:auto">
+    <div style="font-size:52px">🔺</div>
+    <h2 style="font-size:22px;font-weight:800">Bloc Dash</h2>
+    <p style="color:var(--muted);font-size:13px;max-width:280px;line-height:1.6">Saute par-dessus les pics, atterris sur les blocs. Touche un pic = perdu. Tape l'écran ou appuie sur ESPACE pour sauter !</p>
+    <div style="display:flex;gap:10px;width:100%;max-width:300px">
+      <div style="flex:1;background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:10px">
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Ton record</div>
+        <div style="font-size:18px;font-weight:800;color:#fcd34d" id="dashBestStart">0 m</div>
+      </div>
+      <div style="flex:1;background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:10px">
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Record du site</div>
+        <div style="font-size:18px;font-weight:800;color:#a78bfa" id="dashGlobalStart">0 m</div>
+        <div style="font-size:9px;color:var(--muted)" id="dashGlobalHolder"></div>
+      </div>
+    </div>
+    <button class="btn-main" style="max-width:220px;margin-top:6px" onclick="startDash()">🚀 Lancer</button>
+    <button class="btn btn-ghost" onclick="openDashShop()">🎨 Skins</button>
+  </div>
+  <div id="dashOverScreen" style="position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(0,0,0,.82);backdrop-filter:blur(6px);z-index:200;padding:24px;text-align:center">
+    <div style="font-size:52px">💥</div>
+    <h2 style="font-size:28px;font-weight:800;color:#fca5a5">Perdu !</h2>
+    <p id="dashOverDist" style="color:var(--muted);font-size:14px"></p>
+    <p id="dashOverCoins" style="color:#fcd34d;font-weight:700;font-size:15px"></p>
+    <p id="dashOverRecord" style="color:#a78bfa;font-weight:700;font-size:13px"></p>
+    <button class="btn-main" style="max-width:200px" onclick="startDash()">🔄 Réessayer</button>
+    <button class="btn btn-ghost" onclick="leaveDash()">🏠 Accueil</button>
+  </div>
+</div>
+
+<!-- DASH SHOP MODAL -->
+<div class="modal-ov" id="dashShopModal">
+  <div class="modal" style="max-width:420px">
+    <h3>🎨 Skins Bloc Dash</h3>
+    <p class="msub">Solde : <strong id="dashShopCoins" style="color:#fcd34d">0 💰</strong></p>
+    <div id="dashShopItems" style="max-height:55vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px"></div>
+    <div class="modal-acts"><button class="btn btn-ghost" onclick="closeModal('dashShopModal')">Fermer</button></div>
   </div>
 </div>
 
@@ -1769,7 +1799,7 @@ function closePanel(id){document.getElementById(id).classList.remove('open')}
 var APPS=[
   {id:'chat',name:'ChatRoom',icon:'💬'},
   {id:'game',name:'Battle Royale',icon:'🎮'},
-  {id:'search',name:'Recherche',icon:'🔍'}
+  {id:'dash',name:'Bloc Dash',icon:'🔺'}
 ];
 
 function backToHome(){
@@ -1783,14 +1813,7 @@ function goToApp(id){
   if(CU.blockedApps&&CU.blockedApps[id]){toast('Tu as été bloqué de cette app.','err');return;}
   if(id==='chat'){showPage('appPage');refreshGroupList();refreshFriendList();}
   else if(id==='game'){goToGame();}
-  else if(id==='search'){showPage('searchPage');setTimeout(function(){var i=document.getElementById('searchInput');if(i)i.focus();},100);}
-}
-
-function doWebSearch(event){
-  event.preventDefault();
-  var q=document.getElementById('searchInput').value.trim();
-  if(!q)return;
-  window.open('https://www.google.com/search?q='+encodeURIComponent(q),'_blank');
+  else if(id==='dash'){goToDash();}
 }
 
 function renderHome(){
@@ -2479,6 +2502,306 @@ function endMultiGame(){
   }
   G.multi=false;MY_LOBBY=null;
   if(lobbyRef){lobbyRef.off();lobbyRef=null;}
+}
+
+/* ══════════════════════════════
+   BLOC DASH
+══════════════════════════════ */
+var D={running:false,canvas:null,ctx:null,raf:null,lastT:0,
+  worldX:0,speed:320,GRAVITY:2200,JUMP_V:760,
+  playerY:0,vy:0,grounded:true,cubeSize:42,cubeScreenX:130,groundY:0,
+  obstacles:[],particles:[],nextSpawnX:600,holding:false,dead:false,
+  coins:0,skin:'#8b5cf6'};
+var DASH_AIR_TIME=2*D.JUMP_V/D.GRAVITY;
+var DASH_SKINS=[
+  {id:'def',name:'Violet',color:'#8b5cf6',price:0},
+  {id:'cyan',name:'Cyan Néon',color:'#22d3ee',price:60},
+  {id:'lime',name:'Lime Électrique',color:'#a3e635',price:60},
+  {id:'red',name:'Rouge Carmin',color:'#f87171',price:80},
+  {id:'gold',name:'Or Légendaire',color:'#fbbf24',price:150},
+  {id:'pink',name:'Rose Flash',color:'#f472b6',price:100},
+  {id:'white',name:'Blanc Pur',color:'#f1f5f9',price:120}
+];
+
+function dashGlobalBest(){
+  var best=0,holder='';
+  Object.keys(usersCache||{}).forEach(function(uid){
+    var b=(usersCache[uid]||{}).dashBest||0;
+    if(b>best){best=b;holder=uid;}
+  });
+  return {best:best,holder:holder};
+}
+
+function goToDash(){
+  if(!CU)return;
+  showPage('dashPage');
+  D.coins=usersCache[CU.id]&&usersCache[CU.id].coins!=null?usersCache[CU.id].coins:0;
+  db.ref('users/'+CU.id+'/coins').once('value',function(s){D.coins=s.exists()?s.val():0;syncDashCoins();});
+  db.ref('users/'+CU.id+'/dashSkin').once('value',function(s){D.skin=s.exists()?s.val():'#8b5cf6';});
+  var myBest=(usersCache[CU.id]||{}).dashBest||0;
+  document.getElementById('dashBestStart').textContent=myBest+' m';
+  var gb=dashGlobalBest();
+  document.getElementById('dashGlobalStart').textContent=gb.best+' m';
+  document.getElementById('dashGlobalHolder').textContent=gb.holder?('par '+gb.holder):'';
+  document.getElementById('dashStartScreen').style.display='flex';
+  document.getElementById('dashOverScreen').style.display='none';
+  document.getElementById('dashHud').style.display='none';
+  var cv=document.getElementById('dashCanvas');cv.style.display='none';
+}
+
+function syncDashCoins(){
+  var el=document.getElementById('dashCoinsDisplay');if(el)el.textContent='💰 '+D.coins;
+  var sc=document.getElementById('dashShopCoins');if(sc)sc.textContent=D.coins+' 💰';
+}
+
+function startDash(){
+  var cv=document.getElementById('dashCanvas');
+  D.canvas=cv;D.ctx=cv.getContext('2d');
+  cv.width=cv.offsetWidth||window.innerWidth;cv.height=cv.offsetHeight||(window.innerHeight-50);
+  D.groundY=cv.height*0.72;
+  D.worldX=0;D.speed=320;D.playerY=0;D.vy=0;D.grounded=true;
+  D.obstacles=[];D.particles=[];D.nextSpawnX=600;D.dead=false;D.running=true;
+  D.lastT=performance.now();D.holding=false;
+  document.getElementById('dashStartScreen').style.display='none';
+  document.getElementById('dashOverScreen').style.display='none';
+  document.getElementById('dashHud').style.display='block';
+  cv.style.display='block';
+  setupDashInput();
+  window.addEventListener('keydown',dKeyDown);
+  window.addEventListener('keyup',dKeyUp);
+  D.raf=requestAnimationFrame(dLoop);
+}
+
+function dKeyDown(e){if(e.key===' '||e.key==='ArrowUp'){e.preventDefault();dJump();}}
+function dKeyUp(e){}
+
+function setupDashInput(){
+  var cv=D.canvas;
+  cv.onmousedown=function(){dJump();};
+  cv.ontouchstart=function(e){e.preventDefault();dJump();};
+}
+
+function dJump(){
+  if(!D.running||D.dead)return;
+  if(D.grounded){D.vy=D.JUMP_V;D.grounded=false;}
+}
+
+function dLoop(ts){
+  if(!D.running)return;
+  var dt=Math.min((ts-D.lastT)/1000,.05);D.lastT=ts;
+  dUpdate(dt);dRender();
+  D.raf=requestAnimationFrame(dLoop);
+}
+
+function dGenerateLevel(){
+  while(D.nextSpawnX<D.worldX+3000){
+    var range=D.speed*DASH_AIR_TIME;
+    var maxW=Math.max(40,range*0.5);
+    var roll=Math.random();
+    var cw,type,h;
+    if(roll<0.34){type='spike1';cw=36;h=34;}
+    else if(roll<0.58){type='spike2';cw=Math.min(70,maxW);h=34;}
+    else if(roll<0.8){type='block';h=Math.min(70,Math.max(28,range*0.22));cw=Math.min(90,maxW);}
+    else {type='spikeblock';h=Math.min(60,Math.max(26,range*0.18));cw=Math.min(110,maxW);}
+    D.obstacles.push({x:D.nextSpawnX,w:cw,h:h,type:type,alive:true});
+    var gap=Math.max(170,D.speed*0.42)+Math.random()*Math.max(120,D.speed*0.3);
+    D.nextSpawnX+=cw+gap;
+  }
+  D.obstacles=D.obstacles.filter(function(o){return o.x+o.w>D.worldX-300;});
+}
+
+function dUpdate(dt){
+  if(D.dead)return;
+  D.worldX+=D.speed*dt;
+  D.speed=Math.min(640,320+Math.floor(D.worldX/30)*1.05);
+
+  D.vy-=D.GRAVITY*dt;
+  D.playerY+=D.vy*dt;
+
+  var localGround=0;
+  var px1=D.worldX,px2=D.worldX+D.cubeSize;
+  var died=false;
+
+  D.obstacles.forEach(function(o){
+    if(!o.alive)return;
+    var ox1=o.x,ox2=o.x+o.w;
+    var overlapX=px2>ox1&&px1<ox2;
+    if(!overlapX)return;
+    if(o.type==='block'){
+      if(D.playerY>=o.h-4){localGround=Math.max(localGround,o.h);}
+      else{died=true;}
+    } else if(o.type==='spikeblock'){
+      // bas = bloc, sommet = pic : il faut sauter PAR-DESSUS tout (pas atterrir dessus)
+      if(D.playerY<o.h+30){died=true;}
+    } else {
+      // spike1 / spike2 : pic plein, infranchissable sauf en sautant par-dessus
+      if(D.playerY<o.h){died=true;}
+    }
+  });
+
+  if(D.playerY<=localGround){D.playerY=localGround;D.vy=0;D.grounded=true;}
+  else{D.grounded=false;}
+
+  if(died){dDie();return;}
+
+  dGenerateLevel();
+
+  // particules de traînée
+  if(Math.random()<0.5){
+    D.particles.push({x:D.worldX-10,y:D.groundY-D.playerY-4,life:0.4,vx:-D.speed*0.3});
+  }
+  D.particles=D.particles.filter(function(pt){pt.life-=dt;pt.x+=pt.vx*dt;return pt.life>0;});
+
+  var distM=Math.floor(D.worldX/30);
+  document.getElementById('dashDist').textContent=distM+' m';
+  var myBest=(usersCache[CU.id]||{}).dashBest||0;
+  document.getElementById('dashBestDisp').textContent='Best: '+myBest+' m';
+}
+
+function dDie(){
+  D.dead=true;D.running=false;
+  if(D.raf){cancelAnimationFrame(D.raf);D.raf=null;}
+  window.removeEventListener('keydown',dKeyDown);
+  window.removeEventListener('keyup',dKeyUp);
+  var distM=Math.floor(D.worldX/30);
+  D.coins+=distM;
+  db.ref('users/'+CU.id+'/coins').set(D.coins);
+  syncDashCoins();
+  var prevBest=(usersCache[CU.id]||{}).dashBest||0;
+  var newRecord=distM>prevBest;
+  db.ref('users/'+CU.id+'/dashBest').transaction(function(cur){return Math.max(cur||0,distM);});
+  document.getElementById('dashOverDist').textContent='Distance : '+distM+' m';
+  document.getElementById('dashOverCoins').textContent='+'+distM+' crédits gagnés (total : '+D.coins+' 💰)';
+  document.getElementById('dashOverRecord').textContent=newRecord?'🏆 Nouveau record personnel !':'';
+  document.getElementById('dashOverScreen').style.display='flex';
+}
+
+function leaveDash(){
+  D.running=false;D.dead=true;
+  if(D.raf){cancelAnimationFrame(D.raf);D.raf=null;}
+  window.removeEventListener('keydown',dKeyDown);
+  window.removeEventListener('keyup',dKeyUp);
+  if(CU)db.ref('users/'+CU.id+'/coins').set(D.coins);
+  backToHome();
+}
+
+function dRender(){
+  var cv=D.canvas,ctx=D.ctx;if(!cv||!ctx)return;
+  cv.width=cv.offsetWidth;cv.height=cv.offsetHeight;
+  D.groundY=cv.height*0.72;
+  ctx.clearRect(0,0,cv.width,cv.height);
+  // fond dégradé + grille néon
+  var grad=ctx.createLinearGradient(0,0,0,cv.height);
+  grad.addColorStop(0,'#0a0a18');grad.addColorStop(1,'#160b22');
+  ctx.fillStyle=grad;ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.strokeStyle='rgba(139,92,246,.06)';ctx.lineWidth=1;
+  for(var gx=-((D.worldX*0.5)%80);gx<cv.width;gx+=80){ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,cv.height);ctx.stroke();}
+  // sol
+  ctx.fillStyle='#1a1130';ctx.fillRect(0,D.groundY,cv.width,cv.height-D.groundY);
+  ctx.fillStyle='#8b5cf6';ctx.fillRect(0,D.groundY,cv.width,3);
+
+  // particules
+  D.particles.forEach(function(pt){
+    var sx=pt.x-D.worldX+D.cubeScreenX;
+    ctx.fillStyle='rgba(139,92,246,'+Math.max(0,pt.life/0.4*0.5)+')';
+    ctx.beginPath();ctx.arc(sx,pt.y,3,0,Math.PI*2);ctx.fill();
+  });
+
+  // obstacles
+  D.obstacles.forEach(function(o){
+    var sx=o.x-D.worldX+D.cubeScreenX;
+    if(sx+o.w<0||sx>cv.width)return;
+    if(o.type==='block'){
+      ctx.fillStyle='#3730a3';ctx.fillRect(sx,D.groundY-o.h,o.w,o.h);
+      ctx.strokeStyle='#818cf8';ctx.lineWidth=2;ctx.strokeRect(sx,D.groundY-o.h,o.w,o.h);
+    } else if(o.type==='spikeblock'){
+      ctx.fillStyle='#3730a3';ctx.fillRect(sx,D.groundY-o.h,o.w,o.h);
+      ctx.strokeStyle='#818cf8';ctx.lineWidth=2;ctx.strokeRect(sx,D.groundY-o.h,o.w,o.h);
+      dDrawSpike(ctx,sx+o.w/2,D.groundY-o.h,28);
+    } else if(o.type==='spike2'){
+      dDrawSpike(ctx,sx+o.w*0.27,D.groundY,o.h);
+      dDrawSpike(ctx,sx+o.w*0.73,D.groundY,o.h);
+    } else {
+      dDrawSpike(ctx,sx+o.w/2,D.groundY,o.h);
+    }
+  });
+
+  // joueur
+  var py=D.groundY-D.playerY-D.cubeSize;
+  ctx.save();
+  ctx.translate(D.cubeScreenX+D.cubeSize/2,py+D.cubeSize/2);
+  var rot=(D.worldX*0.012)%(Math.PI*2);
+  if(D.grounded)rot=0;
+  ctx.rotate(rot);
+  ctx.shadowColor=D.skin;ctx.shadowBlur=18;
+  ctx.fillStyle=D.skin;
+  var cs=D.cubeSize;
+  roundRectPath(ctx,-cs/2,-cs/2,cs,cs,8);
+  ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.fillStyle='rgba(255,255,255,.25)';
+  roundRectPath(ctx,-cs/2,-cs/2,cs,cs*0.4,6);
+  ctx.fill();
+  ctx.restore();
+}
+
+function roundRectPath(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+function dDrawSpike(ctx,cx,baseY,h){
+  ctx.fillStyle='#ec4899';
+  ctx.shadowColor='#ec4899';ctx.shadowBlur=8;
+  ctx.beginPath();
+  ctx.moveTo(cx-16,baseY);
+  ctx.lineTo(cx,baseY-h);
+  ctx.lineTo(cx+16,baseY);
+  ctx.closePath();ctx.fill();
+  ctx.shadowBlur=0;
+}
+
+/* ══ BOUTIQUE BLOC DASH ══ */
+function openDashShop(){
+  db.ref('users/'+CU.id+'/coins').once('value',function(s){D.coins=s.exists()?s.val():0;syncDashCoins();});
+  db.ref('users/'+CU.id+'/dashOwnedSkins').once('value',function(os){
+    db.ref('users/'+CU.id+'/dashSkin').once('value',function(sk){
+      D.skin=sk.exists()?sk.val():'#8b5cf6';
+      var owned=os.exists()?os.val():{};owned.def=true;
+      renderDashShop(owned);
+      openModal('dashShopModal');
+    });
+  });
+}
+function renderDashShop(owned){
+  var cont=document.getElementById('dashShopItems');if(!cont)return;cont.innerHTML='';
+  syncDashCoins();
+  DASH_SKINS.forEach(function(item){
+    var isOwned=!!(owned&&owned[item.id])||item.price===0;
+    var isActive=D.skin===item.color;
+    var row=document.createElement('div');
+    row.style.cssText='background:var(--s2);border:1px solid '+(isActive?'var(--accent)':'var(--border)')+';border-radius:12px;padding:12px;display:flex;align-items:center;gap:12px';
+    var sq=document.createElement('div');sq.style.cssText='width:36px;height:36px;border-radius:9px;background:'+item.color+';flex-shrink:0;border:2px solid rgba(255,255,255,.2)';
+    var info=document.createElement('div');info.style.flex='1';
+    info.innerHTML='<div style="font-size:13px;font-weight:700">'+esc(item.name)+'</div><div style="font-size:11px;color:var(--muted)">'+(isOwned?'Possédé':'💰 '+item.price+' crédits')+'</div>';
+    var btn;
+    if(isActive){btn=cBtn('✓ Équipé','btn btn-ok',null);btn.disabled=true;}
+    else if(isOwned){btn=cBtn('Équiper','btn btn-ghost',function(){D.skin=item.color;db.ref('users/'+CU.id+'/dashSkin').set(item.color);toast('Skin équipé !','ok');renderDashShop(owned);});}
+    else{btn=cBtn('Acheter','btn btn-accent',function(){
+      if(D.coins<item.price){toast('Pas assez de crédits !','err');return;}
+      D.coins-=item.price;owned[item.id]=true;
+      db.ref('users/'+CU.id+'/coins').set(D.coins);
+      db.ref('users/'+CU.id+'/dashOwnedSkins/'+item.id).set(true);
+      D.skin=item.color;db.ref('users/'+CU.id+'/dashSkin').set(item.color);
+      syncDashCoins();toast('Acheté et équipé !','ok');renderDashShop(owned);
+    });}
+    row.appendChild(sq);row.appendChild(info);row.appendChild(btn);cont.appendChild(row);
+  });
 }
 
 function toggleMob(){document.getElementById('sidebar').classList.toggle('mob-open')}
