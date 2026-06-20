@@ -370,6 +370,27 @@ input:focus,textarea:focus{outline:none}
   </div>
 </div>
 
+<!-- SEARCH PAGE -->
+<div class="page" id="searchPage" style="flex-direction:column;background:var(--bg)">
+  <div class="home-top">
+    <button class="h-ibtn" onclick="backToHome()" title="Accueil">🏠</button>
+    <span style="flex:1"></span>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:20px">
+    <div style="font-size:46px;font-weight:800;letter-spacing:-1px">
+      <span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span>
+    </div>
+    <form onsubmit="doWebSearch(event)" style="width:100%;max-width:480px;display:flex;gap:10px">
+      <input id="searchInput" type="text" placeholder="Rechercher sur le web…" autocomplete="off"
+        style="flex:1;background:var(--s1);border:1px solid var(--border);border-radius:24px;padding:13px 20px;color:var(--text);font-size:15px;font-family:'Sora',sans-serif;outline:none"/>
+      <button type="submit" class="h-ibtn" style="width:46px;height:46px;border-radius:50%;font-size:18px">🔍</button>
+    </form>
+    <p style="color:var(--muted);font-size:11px;text-align:center;max-width:340px;line-height:1.6">
+      La recherche s'ouvre dans un nouvel onglet (Google ne peut pas s'afficher directement dans une autre page web).
+    </p>
+  </div>
+</div>
+
 <!-- HOME PAGE -->
 <div class="page" id="homePage">
   <div class="home-top">
@@ -1747,7 +1768,8 @@ function closePanel(id){document.getElementById(id).classList.remove('open')}
 ══════════════════════════════ */
 var APPS=[
   {id:'chat',name:'ChatRoom',icon:'💬'},
-  {id:'game',name:'Battle Royale',icon:'🎮'}
+  {id:'game',name:'Battle Royale',icon:'🎮'},
+  {id:'search',name:'Recherche',icon:'🔍'}
 ];
 
 function backToHome(){
@@ -1761,6 +1783,14 @@ function goToApp(id){
   if(CU.blockedApps&&CU.blockedApps[id]){toast('Tu as été bloqué de cette app.','err');return;}
   if(id==='chat'){showPage('appPage');refreshGroupList();refreshFriendList();}
   else if(id==='game'){goToGame();}
+  else if(id==='search'){showPage('searchPage');setTimeout(function(){var i=document.getElementById('searchInput');if(i)i.focus();},100);}
+}
+
+function doWebSearch(event){
+  event.preventDefault();
+  var q=document.getElementById('searchInput').value.trim();
+  if(!q)return;
+  window.open('https://www.google.com/search?q='+encodeURIComponent(q),'_blank');
 }
 
 function renderHome(){
