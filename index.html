@@ -410,7 +410,8 @@ input:focus,textarea:focus{outline:none}
       <div class="val" id="lobbyCoins">0 💰</div>
       <div class="sub">+10 par kill · +50 victoire</div>
     </div>
-    <button class="btn-main" style="max-width:260px;font-size:16px;margin-top:4px" onclick="startGame()">🚀 Jouer</button>
+    <button class="btn-main" style="max-width:260px;font-size:16px;margin-top:4px" onclick="startGame()">🚀 Jouer seul</button>
+    <button class="btn btn-accent" onclick="openLobbyModal()">👥 Jouer avec des amis</button>
     <button class="btn btn-ghost" onclick="openShop()">🛒 Boutique / Skins</button>
   </div>
   <canvas id="gameCanvas" style="display:none"></canvas>
@@ -443,6 +444,24 @@ input:focus,textarea:focus{outline:none}
     <p class="msub">Solde : <strong id="shopCoins" style="color:#fcd34d">0 💰</strong></p>
     <div id="shopItems" style="max-height:55vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px"></div>
     <div class="modal-acts"><button class="btn btn-ghost" onclick="closeModal('shopModal')">Fermer</button></div>
+  </div>
+</div>
+
+<!-- LOBBY MODAL (jouer en équipe) -->
+<div class="modal-ov" id="lobbyModal">
+  <div class="modal" style="max-width:440px">
+    <h3>👥 Salle d'attente</h3>
+    <div id="lobbyBody" style="display:flex;flex-direction:column;gap:12px"></div>
+    <div class="modal-acts"><button class="btn btn-ghost" onclick="closeModal('lobbyModal')">Fermer</button></div>
+  </div>
+</div>
+
+<!-- LOBBY INVITE PICKER -->
+<div class="modal-ov" id="lobbyInviteModal">
+  <div class="modal" style="max-width:380px">
+    <h3>➕ Inviter des amis</h3>
+    <div id="lobbyInviteList" style="max-height:50vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px"></div>
+    <div class="modal-acts"><button class="btn btn-ghost" onclick="closeModal('lobbyInviteModal')">Fermer</button></div>
   </div>
 </div>
 
@@ -624,10 +643,25 @@ input:focus,textarea:focus{outline:none}
     <div class="admin-tabs">
       <button class="atab active" onclick="switchAdminTab('users')">👥 Utilisateurs</button>
       <button class="atab" onclick="switchAdminTab('groups')">💬 Groupes</button>
+      <button class="atab" onclick="switchAdminTab('messages')">🗑️ Messages</button>
       <button class="atab" onclick="switchAdminTab('settings')">🎨 Site</button>
     </div>
     <div class="atab-content active" id="atab-users"></div>
     <div class="atab-content" id="atab-groups"></div>
+    <div class="atab-content" id="atab-messages">
+      <div class="p-section">
+        <h4>🧨 Supprimer partout</h4>
+        <button class="btn btn-red" style="font-size:13px" onclick="adminDeleteAllMessages()">Supprimer TOUS les messages (tous groupes + tous DM)</button>
+      </div>
+      <div class="p-section">
+        <h4>💬 Groupes</h4>
+        <div id="adminMsgGroups"></div>
+      </div>
+      <div class="p-section">
+        <h4>✉️ Conversations privées</h4>
+        <div id="adminMsgDms"></div>
+      </div>
+    </div>
     <div class="atab-content" id="atab-settings">
       <div class="fg"><label>Nom du site</label><input type="text" id="asSiteName" placeholder="SiteApp"/></div>
       <div class="fg"><label>Message de bienvenue</label><input type="text" id="asWelcome" placeholder="Bienvenue !"/></div>
@@ -891,6 +925,7 @@ function refreshFriendList(){
    CONVERSATIONS
 ══════════════════════════════ */
 function openGroupConv(gid){
+  showPage('appPage');
   currentConv={type:'group',id:gid};
   closeMob();
   var g=groupsCache[gid]||{};
@@ -909,6 +944,7 @@ function openGroupConv(gid){
 }
 
 function openDmConv(uid){
+  showPage('appPage');
   currentConv={type:'dm',id:uid};
   closeMob();
   var u=usersCache[uid]||{id:uid};
@@ -1125,7 +1161,8 @@ function openGrpInfoPanel(gid){
       '<div class="p-row-info"><div class="p-row-name">'+esc(uid)+(uid===g.createdBy?' 👑':'')+'</div>'
       +'<div class="p-row-sub">'+(u.online?'En ligne':'Hors ligne')+'</div></div>';
     var acts=document.createElement('div');acts.className='p-row-actions';
-    if(isAdmin&&uid!==CU.id){
+    var canDirectKick=isAdmin||CU.id===g.createdBy;
+    if(canDirectKick&&uid!==CU.id){
       var kb=cBtn('Exclure','bsg bsg-red',function(){adminKick(gid,uid)});acts.appendChild(kb);
     } else if(isMember&&uid!==CU.id){
       var vb=cBtn('Vote excl.','bsg',function(){startVoteKick(gid,uid)});acts.appendChild(vb);
@@ -1383,7 +1420,7 @@ function openNotifPanel(){
   if(!keys.length){list.innerHTML='<p style="color:var(--muted);font-size:13px">Aucune notification.</p>';}
   else keys.forEach(function(k){
     var n=notifs[k];
-    var icons={friend_request:'👋',friend_accepted:'✅',friend_auto:'🤝',new_dm:'💬',group_added:'💬',vote_kick:'🗳',kicked:'❌'};
+    var icons={friend_request:'👋',friend_accepted:'✅',friend_auto:'🤝',new_dm:'💬',group_added:'💬',vote_kick:'🗳',kicked:'❌',game_invite:'🎮'};
     var item=document.createElement('div');item.className='notif-item'+(n.read?'':' unread');
     item.innerHTML='<div class="notif-icon">'+(icons[n.type]||'🔔')+'</div>'
       +'<div style="flex:1"><div class="notif-text">'+esc(n.text||'')+'</div>'
@@ -1392,6 +1429,11 @@ function openNotifPanel(){
         ?'<div class="notif-acts">'
           +'<button class="bsg bsg-ok" onclick="acceptFriendReq(\''+n.from+'\');this.parentNode.innerHTML=\'✓ Accepté\'">Accepter</button>'
           +'<button class="bsg bsg-red" onclick="declineFriendReq(\''+n.from+'\');this.parentNode.innerHTML=\'Refusé\'">Refuser</button>'
+          +'</div>':'')
+      +(n.type==='game_invite'
+        ?'<div class="notif-acts">'
+          +'<button class="bsg bsg-ok" onclick="acceptGameInvite(\''+n.lobbyId+'\');closePanel(\'notifOverlay\');this.parentNode.innerHTML=\'✓ Accepté\'">Accepter</button>'
+          +'<button class="bsg bsg-red" onclick="this.parentNode.innerHTML=\'Refusé\'">Refuser</button>'
           +'</div>':'')
       +'</div>';
     list.appendChild(item);
@@ -1497,9 +1539,11 @@ function closeProfilePopup(){document.getElementById('profilePopup').style.displ
 ══════════════════════════════ */
 function openAdminPanel(){switchAdminTab('users');openModal('adminModal');}
 function switchAdminTab(tab){
-  document.querySelectorAll('.atab').forEach(function(b,i){b.classList.toggle('active',['users','groups','settings'][i]===tab);});
+  var order=['users','groups','messages','settings'];
+  document.querySelectorAll('.atab').forEach(function(b,i){b.classList.toggle('active',order[i]===tab);});
   document.querySelectorAll('.atab-content').forEach(function(c){c.classList.remove('active')});
   document.getElementById('atab-'+tab).classList.add('active');
+  if(tab==='messages')renderAdminMessages();
   if(tab==='users')renderAdminUsers();
   if(tab==='groups')renderAdminGroups();
   if(tab==='settings'){document.getElementById('asSiteName').value=settingsCache.siteName||'SiteApp';document.getElementById('asWelcome').value=settingsCache.welcomeMsg||'';}
@@ -1587,6 +1631,61 @@ function renderAdminGroups(){
       acts.appendChild(cBtn('✕ Suppr.','bsg bsg-red',function(){if(confirm('Supprimer '+g.name+' ?'))db.ref('groups/'+gid).remove().then(function(){row.remove();toast('Groupe supprimé.','ok')})}));
       row.appendChild(acts);cont.appendChild(row);
     });
+  });
+}
+
+function renderAdminMessages(){
+  var gc=document.getElementById('adminMsgGroups');gc.innerHTML='';
+  var dc=document.getElementById('adminMsgDms');dc.innerHTML='';
+  db.ref('groups').once('value').then(function(s){
+    if(!s.exists()){gc.innerHTML='<p style="color:var(--muted);font-size:13px">Aucun groupe.</p>';return;}
+    var groups=s.val();
+    Object.keys(groups).forEach(function(gid){
+      var g=groups[gid];
+      var row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)';
+      var avaEl=document.createElement('div');avaEl.className='ava';avaEl.style.cssText='width:28px;height:28px;font-size:10px;border-radius:7px;flex-shrink:0';
+      setGrpAva(avaEl,null,g.name,g.avatar);
+      var nm=document.createElement('span');nm.style.cssText='flex:1;font-size:13px';nm.textContent=g.name||'Groupe';
+      var cnt=Object.keys(g.messages||{}).length;
+      var ct=document.createElement('span');ct.style.cssText='font-size:11px;color:var(--muted)';ct.textContent=cnt+' msg';
+      var btn=cBtn('🗑️ Vider','bsg bsg-red',function(){
+        if(!confirm('Supprimer tous les messages de "'+(g.name||'Groupe')+'" ?'))return;
+        db.ref('groups/'+gid+'/messages').remove().then(function(){toast('Messages supprimés.','ok');renderAdminMessages();});
+      });
+      row.appendChild(avaEl);row.appendChild(nm);row.appendChild(ct);row.appendChild(btn);
+      gc.appendChild(row);
+    });
+  });
+  db.ref('dms').once('value').then(function(s){
+    if(!s.exists()){dc.innerHTML='<p style="color:var(--muted);font-size:13px">Aucune conversation privée.</p>';return;}
+    var dms=s.val();
+    Object.keys(dms).forEach(function(key){
+      var parts=key.split('__');
+      var row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)';
+      var nm=document.createElement('span');nm.style.cssText='flex:1;font-size:13px';nm.textContent=parts.join(' ↔ ');
+      var cnt=Object.keys((dms[key]||{}).messages||{}).length;
+      var ct=document.createElement('span');ct.style.cssText='font-size:11px;color:var(--muted)';ct.textContent=cnt+' msg';
+      var btn=cBtn('🗑️ Vider','bsg bsg-red',function(){
+        if(!confirm('Supprimer les messages entre '+parts.join(' et ')+' ?'))return;
+        db.ref('dms/'+key+'/messages').remove().then(function(){toast('Messages supprimés.','ok');renderAdminMessages();});
+      });
+      row.appendChild(nm);row.appendChild(ct);row.appendChild(btn);
+      dc.appendChild(row);
+    });
+  });
+}
+function adminDeleteAllMessages(){
+  if(!confirm('Supprimer TOUS les messages de TOUS les groupes ET de toutes les conversations privées ? Action irréversible.'))return;
+  Promise.all([
+    db.ref('groups').once('value').then(function(s){
+      if(!s.exists())return;
+      var p=[];Object.keys(s.val()).forEach(function(gid){p.push(db.ref('groups/'+gid+'/messages').remove());});
+      return Promise.all(p);
+    }),
+    db.ref('dms').remove()
+  ]).then(function(){
+    toast('Tous les messages ont été supprimés.','ok');
+    renderAdminMessages();
   });
 }
 
@@ -1728,7 +1827,7 @@ function listenNotif(){
 /* ══════════════════════════════
    BATTLE ROYALE
 ══════════════════════════════ */
-var G={running:false,canvas:null,ctx:null,raf:null,W:2400,H:2400,cam:{x:0,y:0},player:null,bots:[],bullets:[],loot:[],storm:{cx:1200,cy:1200,r:1600,phase:0,timer:0,shrinkDur:45,startR:1600,endR:1050},kills:0,alive:16,coins:0,keys:{},joy:{active:false,id:-1,bx:0,by:0,dx:0,dy:0},aim:{firing:false,id:-1,ax:0,ay:0},skin:'#6d28d9',lastT:0};
+var G={running:false,canvas:null,ctx:null,raf:null,W:2400,H:2400,cam:{x:0,y:0},player:null,bots:[],bullets:[],loot:[],storm:{cx:1200,cy:1200,r:1600,phase:0,timer:0,shrinkDur:45,startR:1600,endR:1050},kills:0,alive:16,coins:0,keys:{},joy:{active:false,id:-1,bx:0,by:0,dx:0,dy:0},aim:{firing:false,id:-1,ax:0,ay:0},skin:'#6d28d9',lastT:0,multi:false,lobbyId:null,isHost:false,teamsOn:false,myTeam:0,remotePlayers:{},syncBots:{},syncInterval:null,playersListenerRef:null,botsListenerRef:null,ended:false};
 var STORM_PHASES=[[1600,45],[1050,35],[600,28],[280,20],[100,0]];
 var BOT_COLORS=['#ef4444','#f97316','#eab308','#22c55e','#06b6d4','#3b82f6','#8b5cf6','#ec4899','#14b8a6','#f59e0b','#84cc16','#a855f7','#f43f5e','#0ea5e9','#10b981'];
 var SKINS=[
@@ -1758,14 +1857,15 @@ function goToGame(){
 }
 
 function startGame(){
+  G.multi=false;G.ended=false;
   var cv=document.getElementById('gameCanvas');
   G.canvas=cv;G.ctx=cv.getContext('2d');
   cv.width=cv.offsetWidth||window.innerWidth;cv.height=cv.offsetHeight||(window.innerHeight-50);
-  G.player={x:G.W/2,y:G.H/2,hp:100,maxHp:100,r:14,angle:0,speed:3.6,cd:0,alive:true,skin:G.skin};
+  G.player={x:G.W/2,y:G.H/2,hp:140,maxHp:140,r:14,angle:0,speed:3.6,cd:0,alive:true,skin:G.skin};
   G.bots=[];
   for(var i=0;i<15;i++){
-    var a=Math.random()*Math.PI*2,d=200+Math.random()*800;
-    G.bots.push({x:G.W/2+Math.cos(a)*d,y:G.H/2+Math.sin(a)*d,hp:100,maxHp:100,r:14,angle:0,speed:1.8+Math.random()*.8,cd:0,alive:true,skin:BOT_COLORS[i],at:0,wa:Math.random()*Math.PI*2,tx:G.W/2,ty:G.H/2});
+    var a=Math.random()*Math.PI*2,d=350+Math.random()*900;
+    G.bots.push({x:G.W/2+Math.cos(a)*d,y:G.H/2+Math.sin(a)*d,hp:90,maxHp:90,r:14,angle:0,speed:1.4+Math.random()*.6,cd:0,alive:true,skin:BOT_COLORS[i],at:0,wa:Math.random()*Math.PI*2,tx:G.W/2,ty:G.H/2,acc:0.5+Math.random()*0.3});
   }
   G.loot=[];
   for(var j=0;j<40;j++)G.loot.push({x:150+Math.random()*(G.W-300),y:150+Math.random()*(G.H-300),type:Math.random()<.6?'coins':'medkit',val:Math.random()<.6?10+Math.floor(Math.random()*20):30,alive:true});
@@ -1796,6 +1896,7 @@ function gLoop(ts){if(!G.running)return;var dt=Math.min((ts-G.lastT)/1000,.05);G
 function gClamp(v,a,b){return v<a?a:v>b?b:v;}
 
 function gUpdate(dt){
+  if(G.multi){gUpdateMulti(dt);return;}
   var p=G.player;if(!p||!p.alive)return;
   var mx=G.joy.dx,my=G.joy.dy;
   if(G.keys['w']||G.keys['ArrowUp'])my=-1;if(G.keys['s']||G.keys['ArrowDown'])my=1;
@@ -1807,7 +1908,7 @@ function gUpdate(dt){
   if(G.aim.id!==-1)p.angle=Math.atan2(G.aim.ay-sy,G.aim.ax-sx);
   else if(ml>0)p.angle=Math.atan2(my,mx);
   if(p.cd>0)p.cd-=dt;
-  if((G.aim.firing||G.aim.id!==-1)&&p.cd<=0){gSpawnBullet(p,p.angle,true);p.cd=.42;}
+  if((G.aim.firing||G.aim.id!==-1)&&p.cd<=0){gSpawnBullet(p,p.angle,true);p.cd=.32;}
   // loot
   G.loot.forEach(function(l){if(!l.alive)return;if(Math.hypot(p.x-l.x,p.y-l.y)<p.r+16){l.alive=false;if(l.type==='coins'){G.coins+=l.val;syncGameCoins();}else p.hp=Math.min(p.maxHp,p.hp+l.val);}});
   // storm
@@ -1821,7 +1922,7 @@ function gUpdate(dt){
     var bd=Math.hypot(b.x-s.cx,b.y-s.cy),pd=Math.hypot(b.x-p.x,b.y-p.y);
     var tx,ty;
     if(bd>s.r*.88){tx=s.cx+(b.x-s.cx)*.6;ty=s.cy+(b.y-s.cy)*.6;}
-    else if(pd<380){tx=p.x;ty=p.y;if(pd<300&&b.cd<=0){var ba=Math.atan2(p.y-b.y,p.x-b.x)+(Math.random()-.5)*.25;gSpawnBullet(b,ba,false);b.cd=.7+Math.random()*.4;}}
+    else if(pd<240){tx=p.x;ty=p.y;if(pd<200&&b.cd<=0){var ba=Math.atan2(p.y-b.y,p.x-b.x)+(Math.random()-.5)*(0.5/b.acc);gSpawnBullet(b,ba,false);b.cd=1.1+Math.random()*.6;}}
     else{if(b.at>2){b.at=0;b.wa+=(Math.random()-.5)*1.4;b.tx=gClamp(b.x+Math.cos(b.wa)*220,50,G.W-50);b.ty=gClamp(b.y+Math.sin(b.wa)*220,50,G.H-50);}tx=b.tx;ty=b.ty;}
     if(b.cd>0)b.cd-=dt;
     var bx=tx-b.x,by=ty-b.y,bl=Math.hypot(bx,by);if(bl>2){bx/=bl;by/=bl;b.angle=Math.atan2(by,bx);}
@@ -1834,8 +1935,8 @@ function gUpdate(dt){
     if(!bl.alive)return false;
     bl.x+=bl.vx*60*dt;bl.y+=bl.vy*60*dt;bl.life-=dt;
     if(bl.life<=0||bl.x<0||bl.x>G.W||bl.y<0||bl.y>G.H)return false;
-    if(bl.fp){G.bots.forEach(function(b){if(!b.alive)return;if(Math.hypot(bl.x-b.x,bl.y-b.y)<b.r+4){bl.alive=false;b.hp-=26;if(b.hp<=0&&b.alive){b.alive=false;G.alive--;G.kills++;G.coins+=10;syncGameCoins();gUpdateHUD();}}});}
-    else if(Math.hypot(bl.x-p.x,bl.y-p.y)<p.r+4){bl.alive=false;p.hp-=18;}
+    if(bl.fp){G.bots.forEach(function(b){if(!b.alive)return;if(Math.hypot(bl.x-b.x,bl.y-b.y)<b.r+4){bl.alive=false;b.hp-=34;if(b.hp<=0&&b.alive){b.alive=false;G.alive--;G.kills++;G.coins+=10;syncGameCoins();gUpdateHUD();}}});}
+    else if(Math.hypot(bl.x-p.x,bl.y-p.y)<p.r+4){bl.alive=false;p.hp-=9;}
     return bl.alive;
   });
   if(p.hp<=0&&p.alive){p.alive=false;gEnd(false);}
@@ -1846,6 +1947,123 @@ function gUpdate(dt){
 }
 
 function gSpawnBullet(e,a,fp){G.bullets.push({x:e.x+Math.cos(a)*(e.r+2),y:e.y+Math.sin(a)*(e.r+2),vx:Math.cos(a)*9.5,vy:Math.sin(a)*9.5,alive:true,life:1.9,fp:fp,color:e.skin});}
+
+function gUpdateMulti(dt){
+  var p=G.player;if(!p)return;
+  if(p.alive){
+    var mx=G.joy.dx,my=G.joy.dy;
+    if(G.keys['w']||G.keys['ArrowUp'])my=-1;if(G.keys['s']||G.keys['ArrowDown'])my=1;
+    if(G.keys['a']||G.keys['ArrowLeft'])mx=-1;if(G.keys['d']||G.keys['ArrowRight'])mx=1;
+    var ml=Math.hypot(mx,my);if(ml>0){mx/=ml;my/=ml;}
+    p.x=gClamp(p.x+mx*p.speed*60*dt,p.r,G.W-p.r);p.y=gClamp(p.y+my*p.speed*60*dt,p.r,G.H-p.r);
+    var cv=G.canvas,rect=cv.getBoundingClientRect();
+    var sx=rect.left+cv.width/2,sy=rect.top+cv.height/2;
+    if(G.aim.id!==-1)p.angle=Math.atan2(G.aim.ay-sy,G.aim.ax-sx);
+    else if(ml>0)p.angle=Math.atan2(my,mx);
+    if(p.cd>0)p.cd-=dt;
+    if((G.aim.firing||G.aim.id!==-1)&&p.cd<=0){gSpawnBullet(p,p.angle,true);p.cd=.32;}
+    G.loot.forEach(function(l){if(!l.alive)return;if(Math.hypot(p.x-l.x,p.y-l.y)<p.r+16){l.alive=false;if(l.type==='coins'){G.coins+=l.val;syncGameCoins();}else p.hp=Math.min(p.maxHp,p.hp+l.val);}});
+    var s=G.storm;
+    if(Math.hypot(p.x-s.cx,p.y-s.cy)>s.r)p.hp-=18*dt;
+  }
+  var s=G.storm;s.timer+=dt;var prog=Math.min(s.timer/s.shrinkDur,1);
+  s.r=s.startR+(s.endR-s.startR)*prog;
+  if(s.timer>=s.shrinkDur&&s.phase+1<STORM_PHASES.length-1){s.phase++;s.timer=0;s.startR=STORM_PHASES[s.phase][0];s.endR=STORM_PHASES[s.phase+1]?STORM_PHASES[s.phase+1][0]:s.startR;s.shrinkDur=STORM_PHASES[s.phase][1];}
+
+  // host: simule les bots, peut viser n'importe quel joueur (local ou distant)
+  if(G.isHost){
+    var allP=gAllMultiPlayers().filter(function(pl){return pl.alive!==false;});
+    G.bots.forEach(function(b){
+      if(!b.alive)return;b.at+=dt;
+      var bd=Math.hypot(b.x-s.cx,b.y-s.cy);
+      var nearest=null,nd=99999;
+      allP.forEach(function(pl){var d=Math.hypot(b.x-pl.x,b.y-pl.y);if(d<nd){nd=d;nearest=pl;}});
+      var tx,ty;
+      if(bd>s.r*.88){tx=s.cx+(b.x-s.cx)*.6;ty=s.cy+(b.y-s.cy)*.6;}
+      else if(nearest&&nd<240){
+        tx=nearest.x;ty=nearest.y;
+        if(nd<200&&b.cd<=0){
+          b.cd=1.1+Math.random()*.6;
+          var dmg=9;
+          if(nearest.isSelf){p.hp-=dmg;}
+          else{
+            db.ref('gameMatches/'+G.lobbyId+'/players/'+nearest.uid+'/hp').transaction(function(hp){return Math.max(0,(hp==null?100:hp)-dmg);});
+          }
+        }
+      } else {if(b.at>2){b.at=0;b.wa+=(Math.random()-.5)*1.4;b.tx=gClamp(b.x+Math.cos(b.wa)*220,50,G.W-50);b.ty=gClamp(b.y+Math.sin(b.wa)*220,50,G.H-50);}tx=b.tx;ty=b.ty;}
+      if(b.cd>0)b.cd-=dt;
+      var bx=tx-b.x,by=ty-b.y,bl=Math.hypot(bx,by);if(bl>2){bx/=bl;by/=bl;b.angle=Math.atan2(by,bx);}
+      b.x=gClamp(b.x+bx*b.speed*60*dt,b.r,G.W-b.r);b.y=gClamp(b.y+by*b.speed*60*dt,b.r,G.H-b.r);
+      if(Math.hypot(b.x-s.cx,b.y-s.cy)>s.r)b.hp-=14*dt;
+      if(b.hp<=0&&b.alive){
+        b.alive=false;
+        db.ref('gameMatches/'+G.lobbyId+'/bots/'+b.idx+'/alive').set(false);
+      }
+    });
+  }
+
+  // bullets locales : touchent joueurs distants + bots synchronisés
+  G.bullets=G.bullets.filter(function(bl){
+    if(!bl.alive)return false;
+    bl.x+=bl.vx*60*dt;bl.y+=bl.vy*60*dt;bl.life-=dt;
+    if(bl.life<=0||bl.x<0||bl.x>G.W||bl.y<0||bl.y>G.H)return false;
+    if(bl.fp){
+      // contre les bots synchronisés
+      Object.keys(G.syncBots||{}).forEach(function(idx){
+        var b=G.syncBots[idx];
+        if(!b||b.alive===false)return;
+        if(Math.hypot(bl.x-b.x,bl.y-b.y)<18){
+          bl.alive=false;
+          db.ref('gameMatches/'+G.lobbyId+'/bots/'+idx+'/hp').transaction(function(hp){
+            var nh=Math.max(0,(hp==null?90:hp)-34);
+            return nh;
+          },function(err,committed,snap){
+            if(committed&&snap&&snap.val()<=0){
+              G.kills++;G.coins+=10;syncGameCoins();gUpdateHUD();
+              db.ref('gameMatches/'+G.lobbyId+'/bots/'+idx+'/alive').set(false);
+            }
+          });
+        }
+      });
+      // contre les joueurs distants (pas d'amis tirs si même équipe)
+      Object.keys(G.remotePlayers||{}).forEach(function(uid){
+        var pl=G.remotePlayers[uid];
+        if(!pl||pl.alive===false)return;
+        if(G.teamsOn&&pl.team===G.myTeam)return;
+        if(Math.hypot(bl.x-pl.x,bl.y-pl.y)<18){
+          bl.alive=false;
+          db.ref('gameMatches/'+G.lobbyId+'/players/'+uid+'/hp').transaction(function(hp){
+            return Math.max(0,(hp==null?100:hp)-30);
+          },function(err,committed,snap){
+            if(committed&&snap&&snap.val()<=0){
+              G.kills++;G.coins+=10;syncGameCoins();gUpdateHUD();
+              db.ref('gameMatches/'+G.lobbyId+'/players/'+uid+'/alive').set(false);
+            }
+          });
+        }
+      });
+    } else if(p.alive&&Math.hypot(bl.x-p.x,bl.y-p.y)<p.r+4){bl.alive=false;p.hp-=9;}
+    return bl.alive;
+  });
+
+  if(p.hp<=0&&p.alive){p.alive=false;}
+
+  // recalcule le nombre de joueurs vivants
+  var alivePlayers=gAllMultiPlayers().filter(function(pl){return pl.alive!==false&&pl.hp>0;}).length;
+  var aliveBots=Object.keys(G.syncBots||{}).filter(function(idx){return G.syncBots[idx]&&G.syncBots[idx].alive!==false;}).length;
+  G.alive=alivePlayers+aliveBots;
+
+  if(!G.ended){
+    if(!p.alive){G.ended=true;endMultiGame();return;}
+    if(G.alive<=1&&p.alive){G.ended=true;endMultiGame();return;}
+  }
+
+  if(p.alive){
+    G.cam.x=gClamp(p.x-G.canvas.width/2,0,G.W-G.canvas.width);
+    G.cam.y=gClamp(p.y-G.canvas.height/2,0,G.H-G.canvas.height);
+  }
+  gUpdateHUD();
+}
 
 function gRender(){
   var cv=G.canvas,ctx=G.ctx,p=G.player;if(!cv||!ctx)return;
@@ -1860,13 +2078,26 @@ function gRender(){
   ctx.save();ctx.fillStyle='rgba(109,40,217,.2)';ctx.beginPath();ctx.rect(0,0,G.W,G.H);ctx.arc(s.cx,s.cy,s.r,0,Math.PI*2,true);ctx.fill();
   ctx.strokeStyle='rgba(139,92,246,.8)';ctx.lineWidth=3;ctx.setLineDash([10,8]);ctx.beginPath();ctx.arc(s.cx,s.cy,s.r,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.restore();
   G.loot.forEach(function(l){if(!l.alive)return;ctx.fillStyle=l.type==='coins'?'rgba(251,191,36,.15)':'rgba(74,222,128,.15)';ctx.strokeStyle=l.type==='coins'?'#fbbf24':'#4ade80';ctx.lineWidth=2;ctx.beginPath();ctx.arc(l.x,l.y,12,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle='#fff';ctx.font='bold 11px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(l.type==='coins'?'$':'♥',l.x,l.y);});
-  G.bots.forEach(function(b){if(b.alive)gDrawEnt(ctx,b,false);});
+  if(G.multi){
+    Object.keys(G.syncBots||{}).forEach(function(idx){
+      var b=G.syncBots[idx];
+      if(!b||b.alive===false)return;
+      gDrawEnt(ctx,{x:b.x,y:b.y,r:14,angle:b.angle||0,hp:b.hp,maxHp:b.maxHp||90,skin:b.skin||'#ef4444'},false);
+    });
+    Object.keys(G.remotePlayers||{}).forEach(function(uid){
+      var pl=G.remotePlayers[uid];
+      if(!pl||pl.alive===false)return;
+      gDrawEnt(ctx,{x:pl.x,y:pl.y,r:14,angle:pl.angle||0,hp:pl.hp,maxHp:pl.maxHp||140,skin:pl.skin||'#6d28d9'},false,uid);
+    });
+  } else {
+    G.bots.forEach(function(b){if(b.alive)gDrawEnt(ctx,b,false);});
+  }
   if(p&&p.alive)gDrawEnt(ctx,p,true);
   G.bullets.forEach(function(bl){ctx.shadowColor=bl.color;ctx.shadowBlur=8;ctx.fillStyle=bl.color||'#fff';ctx.beginPath();ctx.arc(bl.x,bl.y,4,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;});
   ctx.restore();
 }
 
-function gDrawEnt(ctx,e,isP){
+function gDrawEnt(ctx,e,isP,label){
   ctx.save();ctx.translate(e.x,e.y);
   ctx.shadowColor='rgba(0,0,0,.5)';ctx.shadowBlur=12;
   ctx.fillStyle=e.skin||'#6d28d9';ctx.beginPath();ctx.arc(0,0,e.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
@@ -1877,7 +2108,7 @@ function gDrawEnt(ctx,e,isP){
   ctx.fillStyle='rgba(0,0,0,.4)';ctx.fillRect(hx,hy,hw,6);
   ctx.fillStyle=e.hp>50?'#22c55e':e.hp>25?'#f59e0b':'#ef4444';ctx.fillRect(hx,hy,hw*Math.max(0,e.hp/e.maxHp),6);
   ctx.fillStyle='rgba(255,255,255,.5)';ctx.font='9px Sora,sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';
-  ctx.fillText(isP?'👑 Toi':'Bot',e.x,hy-1);
+  ctx.fillText(isP?'👑 Toi':(label||'Bot'),e.x,hy-1);
 }
 
 function gUpdateHUD(){
@@ -1909,6 +2140,17 @@ function leaveGame(){
   G.running=false;if(G.raf){cancelAnimationFrame(G.raf);G.raf=null;}
   window.removeEventListener('keydown',gkd);window.removeEventListener('keyup',gku);
   document.getElementById('joyBase').style.display='none';
+  if(G.multi){
+    if(G.syncInterval){clearInterval(G.syncInterval);G.syncInterval=null;}
+    if(G.playersListenerRef){G.playersListenerRef.off();G.playersListenerRef=null;}
+    if(G.botsListenerRef){G.botsListenerRef.off();G.botsListenerRef=null;}
+    if(G.lobbyId){
+      if(G.isHost){db.ref('gameMatches/'+G.lobbyId).remove();db.ref('gameLobbies/'+G.lobbyId).remove();}
+      else if(CU)db.ref('gameMatches/'+G.lobbyId+'/players/'+CU.id).remove();
+    }
+    G.multi=false;MY_LOBBY=null;
+    if(lobbyRef){lobbyRef.off();lobbyRef=null;}
+  }
   if(CU)db.ref('users/'+CU.id+'/coins').set(G.coins);
   backToHome();
 }
@@ -1939,6 +2181,264 @@ function openShop(){
     });
   });
 }
+/* ══════════════════════════════
+   LOBBY (jouer en équipe)
+══════════════════════════════ */
+var MY_LOBBY=null;
+var lobbyRef=null;
+var lobbyLastSnap=null;
+
+function openLobbyModal(){
+  if(MY_LOBBY){ openModal('lobbyModal'); return; }
+  var body=document.getElementById('lobbyBody');
+  body.innerHTML='';
+  var p=document.createElement('p');p.style.cssText='color:var(--muted);font-size:13px;line-height:1.6';
+  p.textContent='Crée une salle, invite des amis en temps réel, et lancez la partie ensemble.';
+  body.appendChild(p);
+  body.appendChild(cBtn('🚀 Créer une salle','btn-main',function(){createLobby();}));
+  openModal('lobbyModal');
+}
+
+function createLobby(){
+  var id=db.ref('gameLobbies').push().key;
+  var data={host:CU.id,createdAt:Date.now(),status:'waiting',bots:true,teams:false,members:{}};
+  data.members[CU.id]={ready:false,joinedAt:Date.now()};
+  db.ref('gameLobbies/'+id).set(data).then(function(){
+    MY_LOBBY=id;
+    listenLobby(id);
+  });
+}
+
+function listenLobby(lobbyId){
+  if(lobbyRef)lobbyRef.off();
+  lobbyRef=db.ref('gameLobbies/'+lobbyId);
+  lobbyRef.on('value',function(s){
+    lobbyLastSnap=s.val();
+    if(!s.exists()){
+      toast('La salle a été fermée.','info');
+      MY_LOBBY=null;lobbyLastSnap=null;
+      if(lobbyRef){lobbyRef.off();lobbyRef=null;}
+      closeModal('lobbyModal');
+      return;
+    }
+    renderLobby(s.val(),lobbyId);
+    if(s.val().status==='started'){
+      closeModal('lobbyModal');
+      startMultiGame(lobbyId,s.val());
+    }
+  });
+}
+
+function renderLobby(g,lobbyId){
+  var body=document.getElementById('lobbyBody');if(!body)return;
+  body.innerHTML='';
+  var isHost=g.host===CU.id;
+  var members=g.members||{};
+  var memberIds=Object.keys(members);
+
+  var info=document.createElement('p');info.style.cssText='font-size:12px;color:var(--muted)';
+  info.textContent='Hôte : '+g.host+' · '+memberIds.length+' joueur(s)';
+  body.appendChild(info);
+
+  var list=document.createElement('div');list.style.cssText='display:flex;flex-direction:column;gap:6px';
+  memberIds.forEach(function(uid,idx){
+    var m=members[uid];
+    var team=g.teams?((idx%2)+1):null;
+    var row=document.createElement('div');row.className='p-row';
+    var avaEl=document.createElement('div');avaEl.className='ava';avaEl.style.cssText='width:28px;height:28px;font-size:10px;flex-shrink:0';
+    var u=usersCache[uid]||{id:uid};
+    setAva(avaEl,null,uid,u.avatar,u.role==='admin');
+    row.appendChild(avaEl);
+    row.innerHTML+='<div class="p-row-info"><div class="p-row-name">'+esc(uid)+(uid===g.host?' 👑':'')+(team?' · Équipe '+team:'')+'</div>'
+      +'<div class="p-row-sub">'+(m.ready?'✅ Prêt':'⏳ En attente')+'</div></div>';
+    list.appendChild(row);
+  });
+  body.appendChild(list);
+
+  if(isHost){
+    var togBots=document.createElement('div');togBots.className='p-row';
+    togBots.innerHTML='<div class="p-row-info"><div class="p-row-name">🤖 Bots</div><div class="p-row-sub">Remplir avec des bots</div></div>';
+    var bb=cBtn(g.bots?'Activés':'Désactivés','bsg '+(g.bots?'bsg-ok':'bsg-red'),function(){db.ref('gameLobbies/'+lobbyId+'/bots').set(!g.bots);});
+    togBots.appendChild(bb);body.appendChild(togBots);
+
+    var togTeams=document.createElement('div');togTeams.className='p-row';
+    togTeams.innerHTML='<div class="p-row-info"><div class="p-row-name">⚔️ Équipes</div><div class="p-row-sub">Diviser en 2 équipes</div></div>';
+    var tb=cBtn(g.teams?'Activées':'Désactivées','bsg '+(g.teams?'bsg-ok':'bsg-red'),function(){db.ref('gameLobbies/'+lobbyId+'/teams').set(!g.teams);});
+    togTeams.appendChild(tb);body.appendChild(togTeams);
+  }
+
+  var actRow=document.createElement('div');actRow.style.cssText='display:flex;flex-direction:column;gap:8px;margin-top:6px';
+  actRow.appendChild(cBtn('➕ Inviter des amis','btn btn-accent',function(){openLobbyInvite(lobbyId);}));
+  var meReady=members[CU.id]&&members[CU.id].ready;
+  actRow.appendChild(cBtn(meReady?'❌ Annuler prêt':'✅ Je suis prêt','btn '+(meReady?'btn-ghost':'btn-ok'),function(){
+    db.ref('gameLobbies/'+lobbyId+'/members/'+CU.id+'/ready').set(!meReady);
+  }));
+  if(isHost){
+    var allReady=memberIds.every(function(uid){return members[uid].ready;});
+    var startBtn=cBtn('🚀 Lancer la partie','btn-main',function(){
+      db.ref('gameLobbies/'+lobbyId).update({status:'started'});
+    });
+    if(!allReady){startBtn.style.opacity='.5';}
+    actRow.appendChild(startBtn);
+  }
+  actRow.appendChild(cBtn('🚪 Quitter la salle','btn btn-red',function(){leaveLobby(lobbyId,isHost);}));
+  body.appendChild(actRow);
+}
+
+function leaveLobby(lobbyId,isHost){
+  if(isHost){
+    db.ref('gameLobbies/'+lobbyId).remove();
+  } else {
+    db.ref('gameLobbies/'+lobbyId+'/members/'+CU.id).remove();
+  }
+  if(lobbyRef){lobbyRef.off();lobbyRef=null;}
+  MY_LOBBY=null;lobbyLastSnap=null;
+  closeModal('lobbyModal');
+}
+
+function openLobbyInvite(lobbyId){
+  var list=document.getElementById('lobbyInviteList');list.innerHTML='<p style="color:var(--muted);font-size:13px">Chargement…</p>';
+  db.ref('friendships/'+CU.id).once('value',function(s){
+    list.innerHTML='';
+    if(!s.exists()){list.innerHTML='<p style="color:var(--muted);font-size:13px">Tu n\'as pas encore d\'amis à inviter.</p>';openModal('lobbyInviteModal');return;}
+    var fr=s.val();var any=false;
+    Object.keys(fr).forEach(function(fid){
+      if(!fr[fid])return;any=true;
+      var u=usersCache[fid]||{id:fid};
+      var row=document.createElement('div');row.className='p-row';
+      var avaEl=document.createElement('div');avaEl.className='ava';avaEl.style.cssText='width:28px;height:28px;font-size:10px;flex-shrink:0';
+      setAva(avaEl,null,fid,u.avatar,u.role==='admin');
+      row.appendChild(avaEl);
+      row.innerHTML+='<div class="p-row-info"><div class="p-row-name">'+esc(fid)+'</div></div>';
+      var btn=cBtn('Inviter','bsg bsg-ok',function(){
+        pushNotif(fid,'game_invite',{from:CU.id,lobbyId:lobbyId,text:CU.id+' t\'invite à jouer à Battle Royale !'});
+        btn.textContent='Envoyé';btn.disabled=true;
+      });
+      row.appendChild(btn);list.appendChild(row);
+    });
+    if(!any)list.innerHTML='<p style="color:var(--muted);font-size:13px">Tu n\'as pas encore d\'amis à inviter.</p>';
+    openModal('lobbyInviteModal');
+  });
+}
+
+function acceptGameInvite(lobbyId){
+  db.ref('gameLobbies/'+lobbyId).once('value',function(s){
+    if(!s.exists()){toast('Cette salle n\'existe plus.','err');return;}
+    db.ref('gameLobbies/'+lobbyId+'/members/'+CU.id).set({ready:false,joinedAt:Date.now()}).then(function(){
+      MY_LOBBY=lobbyId;
+      goToGame();
+      listenLobby(lobbyId);
+      openLobbyModal();
+    });
+  });
+}
+
+/* ══════════════════════════════
+   MULTIPLAYER MATCH
+══════════════════════════════ */
+function startMultiGame(lobbyId,lobbyData){
+  var cv=document.getElementById('gameCanvas');
+  G.canvas=cv;G.ctx=cv.getContext('2d');
+  cv.width=cv.offsetWidth||window.innerWidth;cv.height=cv.offsetHeight||(window.innerHeight-50);
+  G.multi=true;G.lobbyId=lobbyId;G.ended=false;
+  G.isHost=lobbyData.host===CU.id;
+  G.teamsOn=!!lobbyData.teams;
+  var memberIds=Object.keys(lobbyData.members||{});
+  var myIdx=memberIds.indexOf(CU.id);
+  G.myTeam=G.teamsOn?((myIdx%2)+1):0;
+  var spawnAngle=(myIdx/Math.max(1,memberIds.length))*Math.PI*2;
+  var spawnDist=200;
+  G.player={x:G.W/2+Math.cos(spawnAngle)*spawnDist,y:G.H/2+Math.sin(spawnAngle)*spawnDist,hp:140,maxHp:140,r:14,angle:0,speed:3.6,cd:0,alive:true,skin:G.skin};
+  G.remotePlayers={};
+  G.syncBots={};
+  G.bots=[]; // host-only local sim mirror
+  G.loot=[];
+  for(var j=0;j<40;j++)G.loot.push({x:150+Math.random()*(G.W-300),y:150+Math.random()*(G.H-300),type:Math.random()<.6?'coins':'medkit',val:Math.random()<.6?10+Math.floor(Math.random()*20):30,alive:true});
+  G.bullets=[];G.kills=0;
+  G.storm={cx:G.W/2,cy:G.H/2,r:STORM_PHASES[0][0],phase:0,timer:0,shrinkDur:STORM_PHASES[0][1],startR:STORM_PHASES[0][0],endR:STORM_PHASES[1][0]};
+  G.running=true;G.lastT=performance.now();
+  document.getElementById('gameLobby').style.display='none';
+  document.getElementById('gameCanvas').style.display='block';
+  document.getElementById('gameHud').style.display='block';
+  document.getElementById('gameOverScreen').style.display='none';
+  setupGameInput();
+  window.addEventListener('keydown',gkd);window.addEventListener('keyup',gku);
+
+  // host seeds bots
+  if(G.isHost&&lobbyData.bots){
+    var botCount=Math.max(0,16-memberIds.length);
+    for(var i=0;i<botCount;i++){
+      var a=Math.random()*Math.PI*2,d=350+Math.random()*900;
+      var bx=G.W/2+Math.cos(a)*d,by=G.H/2+Math.sin(a)*d;
+      G.bots.push({idx:i,x:bx,y:by,hp:90,maxHp:90,r:14,angle:0,speed:1.4+Math.random()*.6,cd:0,alive:true,skin:BOT_COLORS[i%BOT_COLORS.length],at:0,wa:Math.random()*Math.PI*2,tx:bx,ty:by,acc:0.5+Math.random()*0.3});
+    }
+    db.ref('gameMatches/'+lobbyId+'/bots').set(G.bots.reduce(function(o,b){o[b.idx]={x:b.x,y:b.y,angle:0,hp:b.hp,maxHp:b.maxHp,alive:true,skin:b.skin};return o;},{}));
+  }
+
+  // listeners
+  G.playersListenerRef=db.ref('gameMatches/'+lobbyId+'/players');
+  G.playersListenerRef.on('value',function(s){
+    var all=s.val()||{};
+    delete all[CU.id];
+    G.remotePlayers=all;
+  });
+  G.botsListenerRef=db.ref('gameMatches/'+lobbyId+'/bots');
+  G.botsListenerRef.on('value',function(s){
+    G.syncBots=s.val()||{};
+  });
+
+  // periodic self sync
+  G.syncInterval=setInterval(function(){
+    if(!G.running||!G.player)return;
+    db.ref('gameMatches/'+lobbyId+'/players/'+CU.id).set({
+      x:G.player.x,y:G.player.y,angle:G.player.angle,hp:Math.max(0,G.player.hp),maxHp:G.player.maxHp,
+      alive:G.player.alive,kills:G.kills,skin:G.player.skin,team:G.myTeam
+    });
+    if(G.isHost){
+      G.bots.forEach(function(b){
+        if(!b.alive)return;
+        db.ref('gameMatches/'+lobbyId+'/bots/'+b.idx).update({x:b.x,y:b.y,angle:b.angle});
+      });
+    }
+  },150);
+
+  G.raf=requestAnimationFrame(gLoop);
+}
+
+function gAllMultiPlayers(){
+  // returns array of {uid,x,y,hp,maxHp,alive,team,skin,isSelf}
+  var arr=[{uid:CU.id,x:G.player.x,y:G.player.y,hp:G.player.hp,maxHp:G.player.maxHp,alive:G.player.alive,team:G.myTeam,skin:G.player.skin,isSelf:true}];
+  Object.keys(G.remotePlayers||{}).forEach(function(uid){
+    var p=G.remotePlayers[uid];
+    arr.push({uid:uid,x:p.x,y:p.y,hp:p.hp,maxHp:p.maxHp,alive:p.alive,team:p.team||0,skin:p.skin||'#6d28d9',isSelf:false});
+  });
+  return arr;
+}
+
+function endMultiGame(){
+  G.running=false;if(G.raf){cancelAnimationFrame(G.raf);G.raf=null;}
+  window.removeEventListener('keydown',gkd);window.removeEventListener('keyup',gku);
+  document.getElementById('joyBase').style.display='none';
+  if(G.syncInterval){clearInterval(G.syncInterval);G.syncInterval=null;}
+  if(G.playersListenerRef){G.playersListenerRef.off();G.playersListenerRef=null;}
+  if(G.botsListenerRef){G.botsListenerRef.off();G.botsListenerRef=null;}
+  var win=G.player&&G.player.alive;
+  if(win)G.coins+=50;
+  db.ref('users/'+CU.id+'/coins').set(G.coins);syncGameCoins();
+  document.getElementById('goEmoji').textContent=win?'🏆':'💀';
+  document.getElementById('goTitle').textContent=win?'VICTOIRE !':'Éliminé';
+  document.getElementById('goTitle').style.color=win?'#fcd34d':'#fca5a5';
+  document.getElementById('goStats').textContent='Kills : '+G.kills+(win?' · +50 crédits bonus !':'');
+  document.getElementById('goCoins').textContent='Total crédits : '+G.coins+' 💰';
+  document.getElementById('gameOverScreen').style.display='flex';
+  if(G.isHost){
+    db.ref('gameMatches/'+G.lobbyId).remove();
+    db.ref('gameLobbies/'+G.lobbyId).remove();
+  }
+  G.multi=false;MY_LOBBY=null;
+  if(lobbyRef){lobbyRef.off();lobbyRef=null;}
+}
+
 function toggleMob(){document.getElementById('sidebar').classList.toggle('mob-open')}
 function closeMob(){document.getElementById('sidebar').classList.remove('mob-open')}
 </script>
