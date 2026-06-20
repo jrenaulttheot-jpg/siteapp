@@ -1681,7 +1681,7 @@ function renderHomeFriends(){
   db.ref('friendships/'+CU.id).once('value',function(s){
     row.innerHTML='';
     if(!s.exists()||Object.keys(s.val()).length===0){
-      row.innerHTML='<p class="home-empty">Pas encore d'amis — clique sur Rechercher !</p>';return;
+      row.innerHTML='<p class="home-empty">Pas encore d\'amis — clique sur Rechercher !</p>';return;
     }
     var fr=s.val();
     Object.keys(fr).forEach(function(fid){
