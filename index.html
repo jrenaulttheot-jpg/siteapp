@@ -492,6 +492,68 @@ input:focus,textarea:focus{outline:none}
   </div>
 </div>
 
+<!-- RACE PAGE (Turbo Race) -->
+<div class="page" id="racePage" style="flex-direction:column;background:#0a0a14;position:relative;overflow:hidden">
+  <div class="game-top">
+    <button class="hbtn" onclick="leaveRace()" style="flex-shrink:0">← Accueil</button>
+    <span style="flex:1;font-weight:700;font-size:14px;text-align:center">🏎️ Turbo Race</span>
+    <span id="raceCoinsDisplay" style="font-size:13px;color:#fcd34d;font-weight:700;flex-shrink:0">💰 0</span>
+  </div>
+  <canvas id="raceCanvas"></canvas>
+  <div id="raceHud" style="position:absolute;inset:50px 0 0 0;pointer-events:none;display:none">
+    <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:6px 16px;font-size:13px;font-weight:700;text-align:center;white-space:nowrap">
+      <span id="raceLapText">Tour 1/3</span> · <span id="raceLapTime">0.0s</span>
+    </div>
+    <div style="position:absolute;top:10px;right:14px;background:rgba(0,0,0,.55);border-radius:10px;padding:6px 12px;font-size:11px;font-weight:700;color:#fcd34d">Best: <span id="raceBestLive">–</span></div>
+    <div style="position:absolute;bottom:18px;right:18px;background:rgba(0,0,0,.5);border-radius:12px;padding:8px 14px;text-align:center">
+      <div style="font-size:22px;font-weight:800" id="raceSpeed">0</div>
+      <div style="font-size:9px;color:var(--muted)">km/h</div>
+    </div>
+  </div>
+  <div id="raceTouchZones" style="position:absolute;inset:50px 0 0 0;display:none">
+    <div id="raceTouchLeft" style="position:absolute;left:0;top:0;width:50%;height:100%"></div>
+    <div id="raceTouchRight" style="position:absolute;right:0;top:0;width:50%;height:100%"></div>
+  </div>
+  <div id="raceStartScreen" style="position:absolute;inset:50px 0 0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center;overflow-y:auto">
+    <div style="font-size:52px">🏎️</div>
+    <h2 style="font-size:22px;font-weight:800">Turbo Race</h2>
+    <p style="color:var(--muted);font-size:13px;max-width:280px;line-height:1.6">3 tours chronométrés. Évite l'herbe (ça ralentit) et les cônes ! Tape la gauche/droite de l'écran ou utilise ← → pour braquer.</p>
+    <div style="display:flex;gap:10px;width:100%;max-width:300px">
+      <div style="flex:1;background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:10px">
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Ton meilleur tour</div>
+        <div style="font-size:18px;font-weight:800;color:#fcd34d" id="raceBestStart">–</div>
+      </div>
+      <div style="flex:1;background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:10px">
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Record du site</div>
+        <div style="font-size:18px;font-weight:800;color:#a78bfa" id="raceGlobalStart">–</div>
+        <div style="font-size:9px;color:var(--muted)" id="raceGlobalHolder"></div>
+      </div>
+    </div>
+    <button class="btn-main" style="max-width:220px;margin-top:6px" onclick="startRace()">🚀 Lancer</button>
+    <button class="btn btn-ghost" onclick="openRaceShop()">🎨 Voiture</button>
+  </div>
+  <div id="raceOverScreen" style="position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(0,0,0,.82);backdrop-filter:blur(6px);z-index:200;padding:24px;text-align:center">
+    <div style="font-size:52px">🏁</div>
+    <h2 style="font-size:26px;font-weight:800;color:#a78bfa">Course terminée !</h2>
+    <p id="raceOverTotal" style="color:var(--muted);font-size:14px"></p>
+    <p id="raceOverBestLap" style="color:#fcd34d;font-weight:700;font-size:14px"></p>
+    <p id="raceOverCoins" style="color:#fcd34d;font-weight:700;font-size:15px"></p>
+    <p id="raceOverRecord" style="color:#a78bfa;font-weight:700;font-size:13px"></p>
+    <button class="btn-main" style="max-width:200px" onclick="startRace()">🔄 Réessayer</button>
+    <button class="btn btn-ghost" onclick="leaveRace()">🏠 Accueil</button>
+  </div>
+</div>
+
+<!-- RACE SHOP MODAL -->
+<div class="modal-ov" id="raceShopModal">
+  <div class="modal" style="max-width:400px">
+    <h3>🎨 Couleur de voiture</h3>
+    <p class="msub">Solde : <strong id="raceShopCoins" style="color:#fcd34d">0 💰</strong></p>
+    <div id="raceShopItems" style="max-height:55vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px"></div>
+    <div class="modal-acts"><button class="btn btn-ghost" onclick="closeModal('raceShopModal')">Fermer</button></div>
+  </div>
+</div>
+
 <!-- SHOP MODAL -->
 <div class="modal-ov" id="shopModal">
   <div class="modal" style="max-width:440px">
@@ -1807,7 +1869,8 @@ function closePanel(id){document.getElementById(id).classList.remove('open')}
 var APPS=[
   {id:'chat',name:'ChatRoom',icon:'💬'},
   {id:'game',name:'Battle Royale',icon:'🎮'},
-  {id:'dash',name:'Bloc Dash',icon:'🔺'}
+  {id:'dash',name:'Bloc Dash',icon:'🔺'},
+  {id:'race',name:'Turbo Race',icon:'🏎️'}
 ];
 
 function backToHome(){
@@ -1822,6 +1885,7 @@ function goToApp(id){
   if(id==='chat'){showPage('appPage');refreshGroupList();refreshFriendList();}
   else if(id==='game'){goToGame();}
   else if(id==='dash'){goToDash();}
+  else if(id==='race'){goToRace();}
 }
 
 function renderHome(){
@@ -3005,6 +3069,367 @@ function renderDashShopTab(){
       row.appendChild(prev);row.appendChild(info);row.appendChild(btn);cont.appendChild(row);
     });
   }
+}
+
+/* ══════════════════════════════
+   TURBO RACE (course pseudo-3D)
+══════════════════════════════ */
+var SEG_LEN=200,ROAD_W=2000,CAM_H=900,CAM_DEPTH=0.84,DRAW_DIST=180;
+var RTRACK=[];
+function raceLerp(a,b,t){return a+(b-a)*t;}
+function raceAddSeg(curve){RTRACK.push({index:RTRACK.length,curve:curve,dark:Math.floor(RTRACK.length/3)%2===0});}
+function raceAddRoad(enter,hold,leaveN,curve){
+  var i;
+  for(i=0;i<enter;i++)raceAddSeg(raceLerp(0,curve,i/enter));
+  for(i=0;i<hold;i++)raceAddSeg(curve);
+  for(i=0;i<leaveN;i++)raceAddSeg(raceLerp(curve,0,i/leaveN));
+}
+(function raceBuildTrack(){
+  raceAddRoad(0,50,0,0);
+  raceAddRoad(25,35,25,2.4);
+  raceAddRoad(0,30,0,0);
+  raceAddRoad(18,22,18,-3.4);
+  raceAddRoad(0,28,0,0);
+  raceAddRoad(10,8,10,2.1);raceAddRoad(10,8,10,-2.1);
+  raceAddRoad(0,28,0,0);
+  raceAddRoad(25,45,25,2.8);
+  raceAddRoad(0,35,0,0);
+})();
+var RACE_LEN=RTRACK.length*SEG_LEN;
+var RACE_OBSTACLES=[
+  {seg:70,off:0.55},{seg:140,off:-0.5},{seg:205,off:0.4},
+  {seg:260,off:-0.45},{seg:330,off:0.5}
+];
+var RACE_SKINS=[
+  {id:'def',name:'Rouge',color:'#ef4444',price:0},
+  {id:'blue',name:'Bleu Sport',color:'#3b82f6',price:140},
+  {id:'yellow',name:'Jaune Racing',color:'#facc15',price:140},
+  {id:'green',name:'Vert Turbo',color:'#22c55e',price:180},
+  {id:'purple',name:'Violet Royal',color:'#a855f7',price:240},
+  {id:'black',name:'Noir Mat',color:'#27272a',price:280},
+  {id:'gold',name:'Or Champion',color:'#f59e0b',price:420}
+];
+
+var R={running:false,canvas:null,ctx:null,raf:null,lastT:0,
+  position:0,playerX:0,speed:0,maxSpeed:1500,
+  lap:1,totalLaps:3,lapStartTime:0,bestLapThisRace:null,totalStart:0,
+  steerL:false,steerR:false,coins:0,skin:'#ef4444',obstaclesHit:{},ended:false};
+
+function raceFindSegIdx(pos){return Math.floor(((pos%RACE_LEN)+RACE_LEN)%RACE_LEN/SEG_LEN);}
+
+function raceGlobalBest(){
+  var best=null,holder='';
+  Object.keys(usersCache||{}).forEach(function(uid){
+    var b=(usersCache[uid]||{}).raceBest;
+    if(b&&(best===null||b<best)){best=b;holder=uid;}
+  });
+  return {best:best,holder:holder};
+}
+function raceFmtTime(s){
+  if(s==null)return '–';
+  return s.toFixed(2)+'s';
+}
+
+function goToRace(){
+  if(!CU)return;
+  showPage('racePage');
+  db.ref('users/'+CU.id+'/coins').once('value',function(s){R.coins=s.exists()?s.val():0;syncRaceCoins();});
+  db.ref('users/'+CU.id+'/raceSkin').once('value',function(s){R.skin=s.exists()?s.val():'#ef4444';});
+  var myBest=(usersCache[CU.id]||{}).raceBest;
+  document.getElementById('raceBestStart').textContent=raceFmtTime(myBest);
+  var gb=raceGlobalBest();
+  document.getElementById('raceGlobalStart').textContent=raceFmtTime(gb.best);
+  document.getElementById('raceGlobalHolder').textContent=gb.holder?('par '+gb.holder):'';
+  document.getElementById('raceStartScreen').style.display='flex';
+  document.getElementById('raceOverScreen').style.display='none';
+  document.getElementById('raceHud').style.display='none';
+  document.getElementById('raceTouchZones').style.display='none';
+  document.getElementById('raceCanvas').style.display='none';
+}
+function syncRaceCoins(){
+  var el=document.getElementById('raceCoinsDisplay');if(el)el.textContent='💰 '+R.coins;
+  var sc=document.getElementById('raceShopCoins');if(sc)sc.textContent=R.coins+' 💰';
+}
+
+function startRace(){
+  var cv=document.getElementById('raceCanvas');
+  R.canvas=cv;R.ctx=cv.getContext('2d');
+  cv.width=cv.offsetWidth||window.innerWidth;cv.height=cv.offsetHeight||(window.innerHeight-50);
+  R.position=0;R.playerX=0;R.speed=0;R.lap=1;R.bestLapThisRace=null;R.ended=false;
+  R.lapStartTime=performance.now();R.totalStart=performance.now();
+  R.steerL=false;R.steerR=false;R.obstaclesHit={};
+  R.running=true;R.lastT=performance.now();
+  document.getElementById('raceStartScreen').style.display='none';
+  document.getElementById('raceOverScreen').style.display='none';
+  document.getElementById('raceHud').style.display='block';
+  document.getElementById('raceTouchZones').style.display='block';
+  cv.style.display='block';
+  setupRaceInput();
+  window.addEventListener('keydown',rKeyDown);
+  window.addEventListener('keyup',rKeyUp);
+  R.raf=requestAnimationFrame(rLoop);
+}
+
+function rKeyDown(e){
+  if(e.key==='ArrowLeft'||e.key==='a'||e.key==='q')R.steerL=true;
+  if(e.key==='ArrowRight'||e.key==='d')R.steerR=true;
+}
+function rKeyUp(e){
+  if(e.key==='ArrowLeft'||e.key==='a'||e.key==='q')R.steerL=false;
+  if(e.key==='ArrowRight'||e.key==='d')R.steerR=false;
+}
+function setupRaceInput(){
+  var lz=document.getElementById('raceTouchLeft'),rz=document.getElementById('raceTouchRight');
+  lz.ontouchstart=function(e){e.preventDefault();R.steerL=true;};
+  lz.ontouchend=lz.ontouchcancel=function(){R.steerL=false;};
+  rz.ontouchstart=function(e){e.preventDefault();R.steerR=true;};
+  rz.ontouchend=rz.ontouchcancel=function(){R.steerR=false;};
+  lz.onmousedown=function(){R.steerL=true;};lz.onmouseup=lz.onmouseleave=function(){R.steerL=false;};
+  rz.onmousedown=function(){R.steerR=true;};rz.onmouseup=rz.onmouseleave=function(){R.steerR=false;};
+}
+
+function rLoop(ts){
+  if(!R.running)return;
+  var dt=Math.min((ts-R.lastT)/1000,.05);R.lastT=ts;
+  rUpdate(dt);rRender();
+  R.raf=requestAnimationFrame(rLoop);
+}
+
+function rUpdate(dt){
+  if(R.ended)return;
+  var segIdx=raceFindSegIdx(R.position);
+  var seg=RTRACK[segIdx];
+
+  // accélération auto vers la vitesse max, freinée hors-piste
+  var offRoad=Math.abs(R.playerX)>1;
+  var targetMax=offRoad?R.maxSpeed*0.42:R.maxSpeed;
+  if(R.speed<targetMax)R.speed=Math.min(targetMax,R.speed+1700*dt);
+  else R.speed=Math.max(targetMax,R.speed-2600*dt);
+
+  // virage : effet centrifuge + braquage joueur
+  var speedRatio=R.speed/R.maxSpeed;
+  R.playerX-=dt*2.0*speedRatio*speedRatio*seg.curve*0.014;
+  var steerInput=(R.steerR?1:0)-(R.steerL?1:0);
+  R.playerX+=steerInput*dt*2.6*(0.3+0.7*speedRatio);
+  R.playerX=Math.max(-1.9,Math.min(1.9,R.playerX));
+
+  // obstacles (cônes)
+  RACE_OBSTACLES.forEach(function(o,i){
+    var oz=o.seg*SEG_LEN;
+    var dz=((oz-R.position)%RACE_LEN+RACE_LEN)%RACE_LEN;
+    if(dz<SEG_LEN*1.2&&!R.obstaclesHit[i+'_'+R.lap]){
+      if(Math.abs(R.playerX-o.off)<0.22){
+        R.obstaclesHit[i+'_'+R.lap]=true;
+        R.speed*=0.4;
+        toast('💥 Cône touché !','err');
+      }
+    }
+  });
+
+  R.position+=R.speed*dt;
+  if(R.position>=RACE_LEN){
+    R.position-=RACE_LEN;
+    var lapTime=(performance.now()-R.lapStartTime)/1000;
+    if(R.bestLapThisRace===null||lapTime<R.bestLapThisRace)R.bestLapThisRace=lapTime;
+    R.lapStartTime=performance.now();
+    if(R.lap>=R.totalLaps){rFinish();return;}
+    R.lap++;
+  }
+
+  document.getElementById('raceSpeed').textContent=Math.floor(R.speed/4.2);
+  document.getElementById('raceLapText').textContent='Tour '+R.lap+'/'+R.totalLaps;
+  document.getElementById('raceLapTime').textContent=((performance.now()-R.lapStartTime)/1000).toFixed(1)+'s';
+  document.getElementById('raceBestLive').textContent=R.bestLapThisRace?R.bestLapThisRace.toFixed(2)+'s':'–';
+}
+
+function rFinish(){
+  R.ended=true;R.running=false;
+  if(R.raf){cancelAnimationFrame(R.raf);R.raf=null;}
+  window.removeEventListener('keydown',rKeyDown);
+  window.removeEventListener('keyup',rKeyUp);
+  var totalTime=(performance.now()-R.totalStart)/1000;
+  var creditsEarned=Math.max(20,Math.round(900/totalTime));
+  R.coins+=creditsEarned;
+  db.ref('users/'+CU.id+'/coins').set(R.coins);
+  syncRaceCoins();
+  var prevBest=(usersCache[CU.id]||{}).raceBest;
+  var newRecord=R.bestLapThisRace!=null&&(prevBest==null||R.bestLapThisRace<prevBest);
+  if(R.bestLapThisRace!=null){
+    db.ref('users/'+CU.id+'/raceBest').transaction(function(cur){
+      if(cur==null||R.bestLapThisRace<cur)return R.bestLapThisRace;
+      return cur;
+    });
+  }
+  document.getElementById('raceOverTotal').textContent='Temps total : '+totalTime.toFixed(2)+'s';
+  document.getElementById('raceOverBestLap').textContent='Meilleur tour : '+raceFmtTime(R.bestLapThisRace);
+  document.getElementById('raceOverCoins').textContent='+'+creditsEarned+' crédits (total : '+R.coins+' 💰)';
+  document.getElementById('raceOverRecord').textContent=newRecord?'🏆 Nouveau record personnel !':'';
+  document.getElementById('raceOverScreen').style.display='flex';
+}
+
+function leaveRace(){
+  R.running=false;R.ended=true;
+  if(R.raf){cancelAnimationFrame(R.raf);R.raf=null;}
+  window.removeEventListener('keydown',rKeyDown);
+  window.removeEventListener('keyup',rKeyUp);
+  if(CU)db.ref('users/'+CU.id+'/coins').set(R.coins);
+  backToHome();
+}
+
+function raceProject(worldX,worldZ,camX,camZ,width,height){
+  var dz=worldZ-camZ;
+  if(dz<1)dz=1;
+  var scale=CAM_DEPTH*height/dz;
+  return {
+    x:width/2+scale*(worldX-camX)*width/2,
+    y:height/2-scale*CAM_H*height/2+height*0.5*0+ (height/2)-(scale*0),
+    w:scale*ROAD_W*width/2,
+    scale:scale
+  };
+}
+
+function rRender(){
+  var cv=R.canvas,ctx=R.ctx;if(!cv||!ctx)return;
+  cv.width=cv.offsetWidth;cv.height=cv.offsetHeight;
+  var W=cv.width,H=cv.height;
+  var horizon=H*0.42;
+
+  // ciel
+  var sky=ctx.createLinearGradient(0,0,0,horizon);
+  sky.addColorStop(0,'#1e1b4b');sky.addColorStop(1,'#7c3aed');
+  ctx.fillStyle=sky;ctx.fillRect(0,0,W,horizon);
+  // soleil
+  ctx.fillStyle='rgba(251,191,36,.7)';
+  ctx.beginPath();ctx.arc(W*0.5,horizon*0.55,horizon*0.28,0,Math.PI*2);ctx.fill();
+
+  ctx.fillStyle='#16a34a';ctx.fillRect(0,horizon,W,H-horizon);
+
+  var baseIdx=raceFindSegIdx(R.position);
+  var basePercent=(R.position%SEG_LEN)/SEG_LEN;
+  var camX=R.playerX*ROAD_W/2;
+  var x=0,dx=-(RTRACK[baseIdx].curve*basePercent);
+  var maxY=H;
+
+  for(var n=0;n<DRAW_DIST;n++){
+    var idx=(baseIdx+n)%RTRACK.length;
+    var seg=RTRACK[idx];
+    var z1=n*SEG_LEN-(R.position%SEG_LEN);
+    var z2=z1+SEG_LEN;
+
+    var scale1=CAM_DEPTH*H/Math.max(1,z1);
+    var scale2=CAM_DEPTH*H/Math.max(1,z2);
+    var cx1=W/2+x*W/2;
+    var cx2=W/2+(x+dx)*W/2;
+    x+=dx;dx+=seg.curve;
+
+    var y1=H/2+scale1*CAM_H*0.5;
+    var y2=H/2+scale2*CAM_H*0.5;
+    var w1=scale1*ROAD_W*0.5;
+    var w2=scale2*ROAD_W*0.5;
+
+    if(z1<=80||y2>=y1||y2>=maxY)continue;
+
+    var grass=seg.dark?'#15803d':'#16a34a';
+    var road=seg.dark?'#3f3f52':'#46465c';
+    var rumble=seg.dark?'#e2e8f0':'#dc2626';
+
+    ctx.fillStyle=grass;ctx.fillRect(0,y2,W,y1-y2);
+
+    rTrap(ctx,road,cx1-w1*1.15,y1,cx1+w1*1.15,y1,cx2+w2*1.15,y2,cx2-w2*1.15,y2);
+    rTrap(ctx,rumble,cx1-w1*1.02,y1,cx1+w1*1.02,y1,cx2+w2*1.02,y2,cx2-w2*1.02,y2);
+    rTrap(ctx,road,cx1-w1,y1,cx1+w1,y1,cx2+w2,y2,cx2-w2,y2);
+
+    if(!seg.dark){
+      rTrap(ctx,'rgba(255,255,255,.7)',cx1-w1*0.04,y1,cx1+w1*0.04,y1,cx2+w2*0.04,y2,cx2-w2*0.04,y2);
+    }
+
+    maxY=y1;
+
+    // obstacles sur ce segment
+    RACE_OBSTACLES.forEach(function(o){
+      if(o.seg===idx){
+        var ow=w2*0.18;
+        var ox=cx2+o.off*w2;
+        rDrawCone(ctx,ox,y2,ow);
+      }
+    });
+  }
+
+  // voiture joueur
+  var carW=Math.min(120,W*0.16);
+  var carX=W/2;
+  var carY=H-Math.max(40,H*0.1);
+  rDrawCar(ctx,carX,carY,carW,R.skin,(R.steerR?1:0)-(R.steerL?1:0));
+}
+
+function rTrap(ctx,color,x1,y1,x2,y2,x3,y3,x4,y4){
+  ctx.fillStyle=color;
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.lineTo(x3,y3);ctx.lineTo(x4,y4);ctx.closePath();ctx.fill();
+}
+
+function rDrawCone(ctx,x,y,w){
+  ctx.fillStyle='#f97316';
+  ctx.beginPath();ctx.moveTo(x,y-w*1.6);ctx.lineTo(x-w*0.6,y);ctx.lineTo(x+w*0.6,y);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#fff';ctx.fillRect(x-w*0.4,y-w*0.7,w*0.8,w*0.18);
+}
+
+function rDrawCar(ctx,cx,cy,w,color,lean){
+  var h=w*0.6;
+  ctx.save();
+  ctx.translate(cx,cy);
+  ctx.rotate(lean*0.06);
+  ctx.shadowColor='rgba(0,0,0,.5)';ctx.shadowBlur=14;
+  ctx.fillStyle=color;
+  roundRectPath(ctx,-w/2,-h/2,w,h,10);
+  ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.fillStyle='rgba(135,206,250,.6)';
+  roundRectPath(ctx,-w*0.32,-h*0.45,w*0.64,h*0.32,4);
+  ctx.fill();
+  ctx.fillStyle='#111';
+  ctx.fillRect(-w/2-4,-h*0.42,6,h*0.28);
+  ctx.fillRect(w/2-2,-h*0.42,6,h*0.28);
+  ctx.fillRect(-w/2-4,h*0.14,6,h*0.28);
+  ctx.fillRect(w/2-2,h*0.14,6,h*0.28);
+  ctx.restore();
+}
+
+/* ══ BOUTIQUE TURBO RACE ══ */
+function openRaceShop(){
+  db.ref('users/'+CU.id+'/coins').once('value',function(s){R.coins=s.exists()?s.val():0;syncRaceCoins();});
+  db.ref('users/'+CU.id+'/raceOwnedSkins').once('value',function(os){
+    db.ref('users/'+CU.id+'/raceSkin').once('value',function(sk){
+      R.skin=sk.exists()?sk.val():'#ef4444';
+      var owned=os.exists()?os.val():{};owned.def=true;
+      renderRaceShop(owned);
+      openModal('raceShopModal');
+    });
+  });
+}
+function renderRaceShop(owned){
+  var cont=document.getElementById('raceShopItems');if(!cont)return;cont.innerHTML='';
+  syncRaceCoins();
+  RACE_SKINS.forEach(function(item){
+    var isOwned=!!(owned&&owned[item.id])||item.price===0;
+    var isActive=R.skin===item.color;
+    var row=document.createElement('div');
+    row.style.cssText='background:var(--s2);border:1px solid '+(isActive?'var(--accent)':'var(--border)')+';border-radius:12px;padding:12px;display:flex;align-items:center;gap:12px';
+    var sq=document.createElement('div');sq.style.cssText='width:36px;height:24px;border-radius:6px;background:'+item.color+';flex-shrink:0;border:2px solid rgba(255,255,255,.2)';
+    var info=document.createElement('div');info.style.flex='1';
+    info.innerHTML='<div style="font-size:13px;font-weight:700">'+esc(item.name)+'</div><div style="font-size:11px;color:var(--muted)">'+(isOwned?'Possédé':'💰 '+item.price+' crédits')+'</div>';
+    var btn;
+    if(isActive){btn=cBtn('✓ Équipé','btn btn-ok',null);btn.disabled=true;}
+    else if(isOwned){btn=cBtn('Équiper','btn btn-ghost',function(){R.skin=item.color;db.ref('users/'+CU.id+'/raceSkin').set(item.color);toast('Voiture équipée !','ok');renderRaceShop(owned);});}
+    else{btn=cBtn('Acheter','btn btn-accent',function(){
+      if(R.coins<item.price){toast('Pas assez de crédits !','err');return;}
+      R.coins-=item.price;owned[item.id]=true;
+      db.ref('users/'+CU.id+'/coins').set(R.coins);
+      db.ref('users/'+CU.id+'/raceOwnedSkins/'+item.id).set(true);
+      R.skin=item.color;db.ref('users/'+CU.id+'/raceSkin').set(item.color);
+      syncRaceCoins();toast('Achetée et équipée !','ok');renderRaceShop(owned);
+    });}
+    row.appendChild(sq);row.appendChild(info);row.appendChild(btn);cont.appendChild(row);
+  });
 }
 
 function toggleMob(){document.getElementById('sidebar').classList.toggle('mob-open')}
