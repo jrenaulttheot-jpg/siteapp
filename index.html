@@ -481,9 +481,13 @@ input:focus,textarea:focus{outline:none}
 <!-- DASH SHOP MODAL -->
 <div class="modal-ov" id="dashShopModal">
   <div class="modal" style="max-width:420px">
-    <h3>🎨 Skins Bloc Dash</h3>
+    <h3>🎨 Boutique Bloc Dash</h3>
     <p class="msub">Solde : <strong id="dashShopCoins" style="color:#fcd34d">0 💰</strong></p>
-    <div id="dashShopItems" style="max-height:55vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px"></div>
+    <div class="admin-tabs" style="margin-bottom:12px">
+      <button class="atab active" id="dashShopTabSkins" onclick="switchDashShopTab('skins')">🎨 Couleurs</button>
+      <button class="atab" id="dashShopTabDecals" onclick="switchDashShopTab('decals')">✨ Motifs</button>
+    </div>
+    <div id="dashShopItems" style="max-height:50vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px"></div>
     <div class="modal-acts"><button class="btn btn-ghost" onclick="closeModal('dashShopModal')">Fermer</button></div>
   </div>
 </div>
@@ -493,7 +497,11 @@ input:focus,textarea:focus{outline:none}
   <div class="modal" style="max-width:440px">
     <h3>🛒 Boutique</h3>
     <p class="msub">Solde : <strong id="shopCoins" style="color:#fcd34d">0 💰</strong></p>
-    <div id="shopItems" style="max-height:55vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px"></div>
+    <div class="admin-tabs" style="margin-bottom:12px">
+      <button class="atab active" id="shopTabSkins" onclick="switchShopTab('skins')">🎨 Couleurs</button>
+      <button class="atab" id="shopTabGuns" onclick="switchShopTab('guns')">🔫 Armes</button>
+    </div>
+    <div id="shopItems" style="max-height:50vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px"></div>
     <div class="modal-acts"><button class="btn btn-ghost" onclick="closeModal('shopModal')">Fermer</button></div>
   </div>
 </div>
@@ -1880,17 +1888,26 @@ function listenNotif(){
 /* ══════════════════════════════
    BATTLE ROYALE
 ══════════════════════════════ */
-var G={running:false,canvas:null,ctx:null,raf:null,W:2400,H:2400,cam:{x:0,y:0},player:null,bots:[],bullets:[],loot:[],storm:{cx:1200,cy:1200,r:1600,phase:0,timer:0,shrinkDur:45,startR:1600,endR:1050},kills:0,alive:16,coins:0,keys:{},joy:{active:false,id:-1,bx:0,by:0,dx:0,dy:0},aim:{firing:false,id:-1,ax:0,ay:0},skin:'#6d28d9',lastT:0,multi:false,lobbyId:null,isHost:false,teamsOn:false,myTeam:0,remotePlayers:{},syncBots:{},syncInterval:null,playersListenerRef:null,botsListenerRef:null,ended:false,expectedMembers:[],expectedBotCount:0,matchStartTime:0};
+var G={running:false,canvas:null,ctx:null,raf:null,W:2400,H:2400,cam:{x:0,y:0},player:null,bots:[],bullets:[],loot:[],storm:{cx:1200,cy:1200,r:1600,phase:0,timer:0,shrinkDur:45,startR:1600,endR:1050},kills:0,alive:16,coins:0,keys:{},joy:{active:false,id:-1,bx:0,by:0,dx:0,dy:0},aim:{firing:false,id:-1,ax:0,ay:0},skin:'#6d28d9',gunStyle:'bar',lastT:0,multi:false,lobbyId:null,isHost:false,teamsOn:false,myTeam:0,remotePlayers:{},syncBots:{},syncInterval:null,playersListenerRef:null,botsListenerRef:null,ended:false,expectedMembers:[],expectedBotCount:0,matchStartTime:0};
 var STORM_PHASES=[[1600,45],[1050,35],[600,28],[280,20],[100,0]];
 var BOT_COLORS=['#ef4444','#f97316','#eab308','#22c55e','#06b6d4','#3b82f6','#8b5cf6','#ec4899','#14b8a6','#f59e0b','#84cc16','#a855f7','#f43f5e','#0ea5e9','#10b981'];
 var SKINS=[
   {id:'def',name:'Violet',color:'#6d28d9',price:0},
-  {id:'red',name:'Rouge',color:'#ef4444',price:80},
-  {id:'blue',name:'Bleu',color:'#3b82f6',price:80},
-  {id:'green',name:'Vert',color:'#22c55e',price:100},
-  {id:'gold',name:'Or Légendaire',color:'#f59e0b',price:200},
-  {id:'pink',name:'Rose Élite',color:'#ec4899',price:150},
-  {id:'white',name:'Fantôme',color:'#e2e8f0',price:180}
+  {id:'red',name:'Rouge',color:'#ef4444',price:180},
+  {id:'blue',name:'Bleu',color:'#3b82f6',price:180},
+  {id:'green',name:'Vert',color:'#22c55e',price:220},
+  {id:'gold',name:'Or Légendaire',color:'#f59e0b',price:450},
+  {id:'pink',name:'Rose Élite',color:'#ec4899',price:340},
+  {id:'white',name:'Fantôme',color:'#e2e8f0',price:400},
+  {id:'black',name:'Ombre Noire',color:'#1e1e2a',price:380},
+  {id:'cyan',name:'Cyan Toxique',color:'#06b6d4',price:300}
+];
+var GUNS=[
+  {id:'bar',name:'Standard','style':'bar',price:0},
+  {id:'round',name:'Canon Rond',style:'round',price:140},
+  {id:'blade',name:'Lame Tranchante',style:'blade',price:220},
+  {id:'dual',name:'Double Canon',style:'dual',price:280},
+  {id:'laser',name:'Fusil Laser',style:'laser',price:500}
 ];
 
 function syncGameCoins(){
@@ -1903,6 +1920,7 @@ function goToGame(){
   showPage('gamePage');
   db.ref('users/'+CU.id+'/coins').once('value',function(s){G.coins=s.exists()?s.val():0;syncGameCoins();});
   db.ref('users/'+CU.id+'/skin').once('value',function(s){G.skin=s.exists()?s.val():'#6d28d9';});
+  db.ref('users/'+CU.id+'/gunStyle').once('value',function(s){G.gunStyle=s.exists()?s.val():'bar';});
   document.getElementById('gameLobby').style.display='flex';
   document.getElementById('gameCanvas').style.display='none';
   document.getElementById('gameHud').style.display='none';
@@ -1914,7 +1932,7 @@ function startGame(){
   var cv=document.getElementById('gameCanvas');
   G.canvas=cv;G.ctx=cv.getContext('2d');
   cv.width=cv.offsetWidth||window.innerWidth;cv.height=cv.offsetHeight||(window.innerHeight-50);
-  G.player={x:G.W/2,y:G.H/2,hp:140,maxHp:140,r:14,angle:0,speed:3.6,cd:0,alive:true,skin:G.skin};
+  G.player={x:G.W/2,y:G.H/2,hp:140,maxHp:140,r:14,angle:0,speed:3.6,cd:0,alive:true,skin:G.skin,gunStyle:G.gunStyle||'bar'};
   G.bots=[];
   for(var i=0;i<15;i++){
     var a=Math.random()*Math.PI*2,d=350+Math.random()*900;
@@ -2149,7 +2167,7 @@ function gRender(){
     Object.keys(G.remotePlayers||{}).forEach(function(uid){
       var pl=G.remotePlayers[uid];
       if(!pl||pl.alive===false)return;
-      gDrawEnt(ctx,{x:pl.x,y:pl.y,r:14,angle:pl.angle||0,hp:pl.hp,maxHp:pl.maxHp||140,skin:pl.skin||'#6d28d9'},false,uid);
+      gDrawEnt(ctx,{x:pl.x,y:pl.y,r:14,angle:pl.angle||0,hp:pl.hp,maxHp:pl.maxHp||140,skin:pl.skin||'#6d28d9',gunStyle:pl.gunStyle||'bar'},false,uid);
     });
   } else {
     G.bots.forEach(function(b){if(b.alive)gDrawEnt(ctx,b,false);});
@@ -2165,12 +2183,31 @@ function gDrawEnt(ctx,e,isP,label){
   ctx.fillStyle=e.skin||'#6d28d9';ctx.beginPath();ctx.arc(0,0,e.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
   ctx.fillStyle='rgba(255,255,255,.12)';ctx.beginPath();ctx.arc(-e.r*.3,-e.r*.3,e.r*.5,0,Math.PI*2);ctx.fill();
   ctx.strokeStyle=isP?'rgba(255,255,255,.7)':'rgba(255,255,255,.2)';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(0,0,e.r,0,Math.PI*2);ctx.stroke();
-  ctx.rotate(e.angle);ctx.fillStyle='rgba(255,255,255,.65)';ctx.fillRect(e.r-2,-3,14,6);ctx.restore();
+  ctx.rotate(e.angle);ctx.fillStyle='rgba(255,255,255,.65)';
+  gDrawGun(ctx,e.r,e.gunStyle||'bar');
+  ctx.restore();
   var hw=e.r*2.4,hx=e.x-hw/2,hy=e.y-e.r-13;
   ctx.fillStyle='rgba(0,0,0,.4)';ctx.fillRect(hx,hy,hw,6);
   ctx.fillStyle=e.hp>50?'#22c55e':e.hp>25?'#f59e0b':'#ef4444';ctx.fillRect(hx,hy,hw*Math.max(0,e.hp/e.maxHp),6);
   ctx.fillStyle='rgba(255,255,255,.5)';ctx.font='9px Sora,sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';
   ctx.fillText(isP?'👑 Toi':(label||'Bot'),e.x,hy-1);
+}
+
+function gDrawGun(ctx,r,style){
+  if(style==='round'){
+    ctx.beginPath();ctx.arc(r+5,0,5,0,Math.PI*2);ctx.fill();
+    ctx.fillRect(r-2,-2.5,9,5);
+  } else if(style==='blade'){
+    ctx.beginPath();ctx.moveTo(r-2,-6);ctx.lineTo(r+20,0);ctx.lineTo(r-2,6);ctx.closePath();ctx.fill();
+  } else if(style==='dual'){
+    ctx.fillRect(r-2,-7,13,4);
+    ctx.fillRect(r-2,3,13,4);
+  } else if(style==='laser'){
+    ctx.fillRect(r-2,-2,22,4);
+    ctx.fillStyle='rgba(239,68,68,.85)';ctx.beginPath();ctx.arc(r+20,0,3,0,Math.PI*2);ctx.fill();
+  } else {
+    ctx.fillRect(r-2,-3,14,6);
+  }
 }
 
 function gUpdateHUD(){
@@ -2218,31 +2255,76 @@ function leaveGame(){
 }
 
 /* ══ BOUTIQUE ══ */
+var shopActiveTab='skins';
 function openShop(){
+  shopActiveTab='skins';
+  document.getElementById('shopTabSkins').classList.add('active');
+  document.getElementById('shopTabGuns').classList.remove('active');
   db.ref('users/'+CU.id+'/coins').once('value',function(s){G.coins=s.exists()?s.val():0;syncGameCoins();});
+  loadShopOwnedData(function(){
+    renderShopTab();
+    openModal('shopModal');
+  });
+}
+function switchShopTab(tab){
+  shopActiveTab=tab;
+  document.getElementById('shopTabSkins').classList.toggle('active',tab==='skins');
+  document.getElementById('shopTabGuns').classList.toggle('active',tab==='guns');
+  loadShopOwnedData(renderShopTab);
+}
+var _shopOwnedSkins={},_shopOwnedGuns={};
+function loadShopOwnedData(cb){
   db.ref('users/'+CU.id+'/ownedSkins').once('value',function(os){
     db.ref('users/'+CU.id+'/skin').once('value',function(sk){
       G.skin=sk.exists()?sk.val():'#6d28d9';
-      var owned=os.exists()?os.val():{};owned.def=true;
-      var cont=document.getElementById('shopItems');if(!cont)return;cont.innerHTML='';
-      SKINS.forEach(function(item){
-        var isOwned=!!(owned&&owned[item.id])||item.price===0;
-        var isActive=G.skin===item.color;
-        var row=document.createElement('div');
-        row.style.cssText='background:var(--s2);border:1px solid '+(isActive?'var(--accent)':'var(--border)')+';border-radius:12px;padding:12px;display:flex;align-items:center;gap:12px';
-        var dot=document.createElement('div');dot.style.cssText='width:40px;height:40px;border-radius:50%;background:'+item.color+';flex-shrink:0;border:2px solid rgba(255,255,255,.2)';
-        var info=document.createElement('div');info.style.flex='1';
-        info.innerHTML='<div style="font-size:13px;font-weight:700">'+esc(item.name)+'</div><div style="font-size:11px;color:var(--muted)">'+(isOwned?'Possédé':'💰 '+item.price+' crédits')+'</div>';
-        var btn;
-        if(isActive){btn=cBtn('✓ Équipé','btn btn-ok',null);btn.disabled=true;}
-        else if(isOwned){btn=cBtn('Équiper','btn btn-ghost',function(){G.skin=item.color;db.ref('users/'+CU.id+'/skin').set(item.color);toast('Skin équipé !','ok');openShop();});}
-        else{btn=cBtn('Acheter','btn btn-accent',function(){if(G.coins<item.price){toast('Pas assez de crédits !','err');return;}G.coins-=item.price;owned[item.id]=true;db.ref('users/'+CU.id+'/coins').set(G.coins);db.ref('users/'+CU.id+'/ownedSkins/'+item.id).set(true);G.skin=item.color;db.ref('users/'+CU.id+'/skin').set(item.color);syncGameCoins();toast('Acheté et équipé !','ok');openShop();});}
-        row.appendChild(dot);row.appendChild(info);row.appendChild(btn);cont.appendChild(row);
+      _shopOwnedSkins=os.exists()?os.val():{};_shopOwnedSkins.def=true;
+      db.ref('users/'+CU.id+'/ownedGuns').once('value',function(og){
+        db.ref('users/'+CU.id+'/gunStyle').once('value',function(gs){
+          G.gunStyle=gs.exists()?gs.val():'bar';
+          _shopOwnedGuns=og.exists()?og.val():{};_shopOwnedGuns.bar=true;
+          cb();
+        });
       });
-      openModal('shopModal');
     });
   });
 }
+function renderShopTab(){
+  var cont=document.getElementById('shopItems');if(!cont)return;cont.innerHTML='';
+  syncGameCoins();
+  if(shopActiveTab==='skins'){
+    SKINS.forEach(function(item){
+      var isOwned=!!(_shopOwnedSkins&&_shopOwnedSkins[item.id])||item.price===0;
+      var isActive=G.skin===item.color;
+      var row=document.createElement('div');
+      row.style.cssText='background:var(--s2);border:1px solid '+(isActive?'var(--accent)':'var(--border)')+';border-radius:12px;padding:12px;display:flex;align-items:center;gap:12px';
+      var dot=document.createElement('div');dot.style.cssText='width:40px;height:40px;border-radius:50%;background:'+item.color+';flex-shrink:0;border:2px solid rgba(255,255,255,.2)';
+      var info=document.createElement('div');info.style.flex='1';
+      info.innerHTML='<div style="font-size:13px;font-weight:700">'+esc(item.name)+'</div><div style="font-size:11px;color:var(--muted)">'+(isOwned?'Possédé':'💰 '+item.price+' crédits')+'</div>';
+      var btn;
+      if(isActive){btn=cBtn('✓ Équipé','btn btn-ok',null);btn.disabled=true;}
+      else if(isOwned){btn=cBtn('Équiper','btn btn-ghost',function(){G.skin=item.color;db.ref('users/'+CU.id+'/skin').set(item.color);toast('Skin équipé !','ok');renderShopTab();});}
+      else{btn=cBtn('Acheter','btn btn-accent',function(){if(G.coins<item.price){toast('Pas assez de crédits !','err');return;}G.coins-=item.price;_shopOwnedSkins[item.id]=true;db.ref('users/'+CU.id+'/coins').set(G.coins);db.ref('users/'+CU.id+'/ownedSkins/'+item.id).set(true);G.skin=item.color;db.ref('users/'+CU.id+'/skin').set(item.color);syncGameCoins();toast('Acheté et équipé !','ok');renderShopTab();});}
+      row.appendChild(dot);row.appendChild(info);row.appendChild(btn);cont.appendChild(row);
+    });
+  } else {
+    GUNS.forEach(function(item){
+      var isOwned=!!(_shopOwnedGuns&&_shopOwnedGuns[item.id])||item.price===0;
+      var isActive=G.gunStyle===item.style;
+      var row=document.createElement('div');
+      row.style.cssText='background:var(--s2);border:1px solid '+(isActive?'var(--accent)':'var(--border)')+';border-radius:12px;padding:12px;display:flex;align-items:center;gap:12px';
+      var prev=document.createElement('canvas');prev.width=44;prev.height=44;prev.style.cssText='flex-shrink:0;border-radius:8px;background:var(--s3)';
+      var pctx=prev.getContext('2d');pctx.save();pctx.translate(14,22);pctx.fillStyle='#6d28d9';pctx.beginPath();pctx.arc(0,0,12,0,Math.PI*2);pctx.fill();pctx.fillStyle='#fff';gDrawGun(pctx,12,item.style);pctx.restore();
+      var info=document.createElement('div');info.style.flex='1';
+      info.innerHTML='<div style="font-size:13px;font-weight:700">'+esc(item.name)+'</div><div style="font-size:11px;color:var(--muted)">'+(isOwned?'Possédé':'💰 '+item.price+' crédits')+'</div>';
+      var btn;
+      if(isActive){btn=cBtn('✓ Équipé','btn btn-ok',null);btn.disabled=true;}
+      else if(isOwned){btn=cBtn('Équiper','btn btn-ghost',function(){G.gunStyle=item.style;db.ref('users/'+CU.id+'/gunStyle').set(item.style);toast('Arme équipée !','ok');renderShopTab();});}
+      else{btn=cBtn('Acheter','btn btn-accent',function(){if(G.coins<item.price){toast('Pas assez de crédits !','err');return;}G.coins-=item.price;_shopOwnedGuns[item.id]=true;db.ref('users/'+CU.id+'/coins').set(G.coins);db.ref('users/'+CU.id+'/ownedGuns/'+item.id).set(true);G.gunStyle=item.style;db.ref('users/'+CU.id+'/gunStyle').set(item.style);syncGameCoins();toast('Achetée et équipée !','ok');renderShopTab();});}
+      row.appendChild(prev);row.appendChild(info);row.appendChild(btn);cont.appendChild(row);
+    });
+  }
+}
+
 /* ══════════════════════════════
    LOBBY (jouer en équipe)
 ══════════════════════════════ */
@@ -2413,7 +2495,7 @@ function startMultiGame(lobbyId,lobbyData){
   G.myTeam=G.teamsOn?((myIdx%2)+1):0;
   var spawnAngle=(myIdx/Math.max(1,memberIds.length))*Math.PI*2;
   var spawnDist=200;
-  G.player={x:G.W/2+Math.cos(spawnAngle)*spawnDist,y:G.H/2+Math.sin(spawnAngle)*spawnDist,hp:140,maxHp:140,r:14,angle:0,speed:3.6,cd:0,alive:true,skin:G.skin};
+  G.player={x:G.W/2+Math.cos(spawnAngle)*spawnDist,y:G.H/2+Math.sin(spawnAngle)*spawnDist,hp:140,maxHp:140,r:14,angle:0,speed:3.6,cd:0,alive:true,skin:G.skin,gunStyle:G.gunStyle||'bar'};
   G.remotePlayers={};
   G.syncBots={};
   G.bots=[]; // host-only local sim mirror
@@ -2457,7 +2539,7 @@ function startMultiGame(lobbyId,lobbyData){
     if(!G.running||!G.player)return;
     db.ref('gameMatches/'+lobbyId+'/players/'+CU.id).set({
       x:G.player.x,y:G.player.y,angle:G.player.angle,hp:Math.max(0,G.player.hp),maxHp:G.player.maxHp,
-      alive:G.player.alive,kills:G.kills,skin:G.player.skin,team:G.myTeam
+      alive:G.player.alive,kills:G.kills,skin:G.player.skin,gunStyle:G.player.gunStyle,team:G.myTeam
     });
     if(G.isHost){
       G.bots.forEach(function(b){
@@ -2511,16 +2593,26 @@ var D={running:false,canvas:null,ctx:null,raf:null,lastT:0,
   worldX:0,speed:320,GRAVITY:2200,JUMP_V:760,
   playerY:0,vy:0,grounded:true,cubeSize:42,cubeScreenX:130,groundY:0,
   obstacles:[],particles:[],nextSpawnX:600,holding:false,dead:false,
-  coins:0,skin:'#8b5cf6'};
+  coins:0,skin:'#8b5cf6',decal:'none'};
 var DASH_AIR_TIME=2*D.JUMP_V/D.GRAVITY;
 var DASH_SKINS=[
   {id:'def',name:'Violet',color:'#8b5cf6',price:0},
-  {id:'cyan',name:'Cyan Néon',color:'#22d3ee',price:60},
-  {id:'lime',name:'Lime Électrique',color:'#a3e635',price:60},
-  {id:'red',name:'Rouge Carmin',color:'#f87171',price:80},
-  {id:'gold',name:'Or Légendaire',color:'#fbbf24',price:150},
-  {id:'pink',name:'Rose Flash',color:'#f472b6',price:100},
-  {id:'white',name:'Blanc Pur',color:'#f1f5f9',price:120}
+  {id:'cyan',name:'Cyan Néon',color:'#22d3ee',price:140},
+  {id:'lime',name:'Lime Électrique',color:'#a3e635',price:140},
+  {id:'red',name:'Rouge Carmin',color:'#f87171',price:180},
+  {id:'gold',name:'Or Légendaire',color:'#fbbf24',price:380},
+  {id:'pink',name:'Rose Flash',color:'#f472b6',price:260},
+  {id:'white',name:'Blanc Pur',color:'#f1f5f9',price:300},
+  {id:'black',name:'Noir Carbone',color:'#18181b',price:280}
+];
+var DASH_DECALS=[
+  {id:'none',name:'Aucun',draw:'none',price:0},
+  {id:'happy',name:'Visage Content',draw:'happy',price:120},
+  {id:'angry',name:'Visage Énervé',draw:'angry',price:120},
+  {id:'star',name:'Étoile',draw:'star',price:160},
+  {id:'lightning',name:'Éclair',draw:'lightning',price:200},
+  {id:'stripes',name:'Rayures',draw:'stripes',price:140},
+  {id:'skull',name:'Crâne',draw:'skull',price:320}
 ];
 
 function dashGlobalBest(){
@@ -2538,6 +2630,7 @@ function goToDash(){
   D.coins=usersCache[CU.id]&&usersCache[CU.id].coins!=null?usersCache[CU.id].coins:0;
   db.ref('users/'+CU.id+'/coins').once('value',function(s){D.coins=s.exists()?s.val():0;syncDashCoins();});
   db.ref('users/'+CU.id+'/dashSkin').once('value',function(s){D.skin=s.exists()?s.val():'#8b5cf6';});
+  db.ref('users/'+CU.id+'/dashDecal').once('value',function(s){D.decal=s.exists()?s.val():'none';});
   var myBest=(usersCache[CU.id]||{}).dashBest||0;
   document.getElementById('dashBestStart').textContent=myBest+' m';
   var gb=dashGlobalBest();
@@ -2618,25 +2711,38 @@ function dUpdate(dt){
   D.vy-=D.GRAVITY*dt;
   D.playerY+=D.vy*dt;
 
+  var HM=7; // marge de tolérance (hitbox forgiveness)
   var localGround=0;
-  var px1=D.worldX,px2=D.worldX+D.cubeSize;
+  var px1=D.worldX+HM,px2=D.worldX+D.cubeSize-HM;
   var died=false;
+  var SPIKE_HALF=13; // doit correspondre à la largeur visuelle du pic (dDrawSpike)
 
   D.obstacles.forEach(function(o){
     if(!o.alive)return;
-    var ox1=o.x,ox2=o.x+o.w;
-    var overlapX=px2>ox1&&px1<ox2;
-    if(!overlapX)return;
+    var ox1=o.x+HM,ox2=o.x+o.w-HM;
+    var overlapBlockX=px2>ox1&&px1<ox2;
+
     if(o.type==='block'){
-      if(D.playerY>=o.h-4){localGround=Math.max(localGround,o.h);}
-      else{died=true;}
-    } else if(o.type==='spikeblock'){
-      // bas = bloc, sommet = pic : il faut sauter PAR-DESSUS tout (pas atterrir dessus)
-      if(D.playerY<o.h+30){died=true;}
-    } else {
-      // spike1 / spike2 : pic plein, infranchissable sauf en sautant par-dessus
-      if(D.playerY<o.h){died=true;}
+      // les blocs ne tuent jamais : on monte automatiquement dessus (escaliers)
+      if(overlapBlockX)localGround=Math.max(localGround,o.h);
+      return;
     }
+
+    if(o.type==='spikeblock'){
+      // base = bloc (sûr, escaladable), un seul pic au centre du sommet
+      if(overlapBlockX&&D.playerY<o.h)localGround=Math.max(localGround,o.h);
+      var scx=o.x+o.w/2;
+      var sOver=px2>scx-SPIKE_HALF&&px1<scx+SPIKE_HALF;
+      if(sOver&&D.playerY<o.h+26-HM)died=true;
+      return;
+    }
+
+    // spike1 / spike2 : un ou deux pics fins, hitbox = largeur réelle du triangle
+    var centers=o.type==='spike2'?[o.x+o.w*0.27,o.x+o.w*0.73]:[o.x+o.w/2];
+    centers.forEach(function(scx){
+      var sOver=px2>scx-SPIKE_HALF&&px1<scx+SPIKE_HALF;
+      if(sOver&&D.playerY<o.h-HM)died=true;
+    });
   });
 
   if(D.playerY<=localGround){D.playerY=localGround;D.vy=0;D.grounded=true;}
@@ -2742,7 +2848,57 @@ function dRender(){
   ctx.fillStyle='rgba(255,255,255,.25)';
   roundRectPath(ctx,-cs/2,-cs/2,cs,cs*0.4,6);
   ctx.fill();
+  dDrawDecal(ctx,cs,D.decal);
   ctx.restore();
+}
+
+function dDrawDecal(ctx,cs,decal){
+  if(!decal||decal==='none')return;
+  ctx.fillStyle='rgba(255,255,255,.92)';
+  ctx.strokeStyle='rgba(0,0,0,.55)';ctx.lineWidth=2;
+  if(decal==='happy'){
+    ctx.beginPath();ctx.arc(-cs*0.16,-cs*0.08,3.2,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(cs*0.16,-cs*0.08,3.2,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(0,cs*0.05,cs*0.2,0.15*Math.PI,0.85*Math.PI);ctx.stroke();
+  } else if(decal==='angry'){
+    ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.moveTo(-cs*0.26,-cs*0.14);ctx.lineTo(-cs*0.05,-cs*0.04);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cs*0.26,-cs*0.14);ctx.lineTo(cs*0.05,-cs*0.04);ctx.stroke();
+    ctx.beginPath();ctx.arc(-cs*0.15,cs*0.02,2.6,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(cs*0.15,cs*0.02,2.6,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(0,cs*0.22,cs*0.16,1.15*Math.PI,1.85*Math.PI);ctx.stroke();
+  } else if(decal==='star'){
+    dStarPath(ctx,0,0,cs*0.26,cs*0.11,5);ctx.fill();
+  } else if(decal==='lightning'){
+    ctx.beginPath();
+    ctx.moveTo(-cs*0.06,-cs*0.32);ctx.lineTo(cs*0.1,-cs*0.02);ctx.lineTo(-cs*0.02,-cs*0.02);
+    ctx.lineTo(cs*0.06,cs*0.32);ctx.lineTo(-cs*0.12,cs*0.0);ctx.lineTo(-cs*0.02,cs*0.0);
+    ctx.closePath();ctx.fill();
+  } else if(decal==='stripes'){
+    ctx.fillStyle='rgba(255,255,255,.55)';
+    for(var i=-1;i<=1;i++){
+      ctx.save();ctx.translate(i*cs*0.24,0);ctx.rotate(-0.5);
+      ctx.fillRect(-cs*0.06,-cs*0.5,cs*0.12,cs);
+      ctx.restore();
+    }
+  } else if(decal==='skull'){
+    ctx.beginPath();ctx.arc(0,-cs*0.04,cs*0.22,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(0,0,0,.6)';
+    ctx.beginPath();ctx.arc(-cs*0.1,-cs*0.06,3.2,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(cs*0.1,-cs*0.06,3.2,0,Math.PI*2);ctx.fill();
+    ctx.fillRect(-cs*0.05,cs*0.06,cs*0.1,4);
+  }
+}
+
+function dStarPath(ctx,cx,cy,rOut,rIn,points){
+  ctx.beginPath();
+  for(var i=0;i<points*2;i++){
+    var r=i%2===0?rOut:rIn;
+    var a=(Math.PI/points)*i-Math.PI/2;
+    var x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r;
+    if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  }
+  ctx.closePath();
 }
 
 function roundRectPath(ctx,x,y,w,h,r){
@@ -2767,41 +2923,88 @@ function dDrawSpike(ctx,cx,baseY,h){
 }
 
 /* ══ BOUTIQUE BLOC DASH ══ */
+var dashShopActiveTab='skins';
+var _dashOwnedSkins={},_dashOwnedDecals={};
 function openDashShop(){
+  dashShopActiveTab='skins';
+  document.getElementById('dashShopTabSkins').classList.add('active');
+  document.getElementById('dashShopTabDecals').classList.remove('active');
   db.ref('users/'+CU.id+'/coins').once('value',function(s){D.coins=s.exists()?s.val():0;syncDashCoins();});
+  loadDashShopOwned(function(){
+    renderDashShopTab();
+    openModal('dashShopModal');
+  });
+}
+function switchDashShopTab(tab){
+  dashShopActiveTab=tab;
+  document.getElementById('dashShopTabSkins').classList.toggle('active',tab==='skins');
+  document.getElementById('dashShopTabDecals').classList.toggle('active',tab==='decals');
+  loadDashShopOwned(renderDashShopTab);
+}
+function loadDashShopOwned(cb){
   db.ref('users/'+CU.id+'/dashOwnedSkins').once('value',function(os){
     db.ref('users/'+CU.id+'/dashSkin').once('value',function(sk){
       D.skin=sk.exists()?sk.val():'#8b5cf6';
-      var owned=os.exists()?os.val():{};owned.def=true;
-      renderDashShop(owned);
-      openModal('dashShopModal');
+      _dashOwnedSkins=os.exists()?os.val():{};_dashOwnedSkins.def=true;
+      db.ref('users/'+CU.id+'/dashOwnedDecals').once('value',function(od){
+        db.ref('users/'+CU.id+'/dashDecal').once('value',function(dd){
+          D.decal=dd.exists()?dd.val():'none';
+          _dashOwnedDecals=od.exists()?od.val():{};_dashOwnedDecals.none=true;
+          cb();
+        });
+      });
     });
   });
 }
-function renderDashShop(owned){
+function renderDashShopTab(){
   var cont=document.getElementById('dashShopItems');if(!cont)return;cont.innerHTML='';
   syncDashCoins();
-  DASH_SKINS.forEach(function(item){
-    var isOwned=!!(owned&&owned[item.id])||item.price===0;
-    var isActive=D.skin===item.color;
-    var row=document.createElement('div');
-    row.style.cssText='background:var(--s2);border:1px solid '+(isActive?'var(--accent)':'var(--border)')+';border-radius:12px;padding:12px;display:flex;align-items:center;gap:12px';
-    var sq=document.createElement('div');sq.style.cssText='width:36px;height:36px;border-radius:9px;background:'+item.color+';flex-shrink:0;border:2px solid rgba(255,255,255,.2)';
-    var info=document.createElement('div');info.style.flex='1';
-    info.innerHTML='<div style="font-size:13px;font-weight:700">'+esc(item.name)+'</div><div style="font-size:11px;color:var(--muted)">'+(isOwned?'Possédé':'💰 '+item.price+' crédits')+'</div>';
-    var btn;
-    if(isActive){btn=cBtn('✓ Équipé','btn btn-ok',null);btn.disabled=true;}
-    else if(isOwned){btn=cBtn('Équiper','btn btn-ghost',function(){D.skin=item.color;db.ref('users/'+CU.id+'/dashSkin').set(item.color);toast('Skin équipé !','ok');renderDashShop(owned);});}
-    else{btn=cBtn('Acheter','btn btn-accent',function(){
-      if(D.coins<item.price){toast('Pas assez de crédits !','err');return;}
-      D.coins-=item.price;owned[item.id]=true;
-      db.ref('users/'+CU.id+'/coins').set(D.coins);
-      db.ref('users/'+CU.id+'/dashOwnedSkins/'+item.id).set(true);
-      D.skin=item.color;db.ref('users/'+CU.id+'/dashSkin').set(item.color);
-      syncDashCoins();toast('Acheté et équipé !','ok');renderDashShop(owned);
-    });}
-    row.appendChild(sq);row.appendChild(info);row.appendChild(btn);cont.appendChild(row);
-  });
+  if(dashShopActiveTab==='skins'){
+    DASH_SKINS.forEach(function(item){
+      var isOwned=!!(_dashOwnedSkins&&_dashOwnedSkins[item.id])||item.price===0;
+      var isActive=D.skin===item.color;
+      var row=document.createElement('div');
+      row.style.cssText='background:var(--s2);border:1px solid '+(isActive?'var(--accent)':'var(--border)')+';border-radius:12px;padding:12px;display:flex;align-items:center;gap:12px';
+      var sq=document.createElement('div');sq.style.cssText='width:36px;height:36px;border-radius:9px;background:'+item.color+';flex-shrink:0;border:2px solid rgba(255,255,255,.2)';
+      var info=document.createElement('div');info.style.flex='1';
+      info.innerHTML='<div style="font-size:13px;font-weight:700">'+esc(item.name)+'</div><div style="font-size:11px;color:var(--muted)">'+(isOwned?'Possédé':'💰 '+item.price+' crédits')+'</div>';
+      var btn;
+      if(isActive){btn=cBtn('✓ Équipé','btn btn-ok',null);btn.disabled=true;}
+      else if(isOwned){btn=cBtn('Équiper','btn btn-ghost',function(){D.skin=item.color;db.ref('users/'+CU.id+'/dashSkin').set(item.color);toast('Skin équipé !','ok');renderDashShopTab();});}
+      else{btn=cBtn('Acheter','btn btn-accent',function(){
+        if(D.coins<item.price){toast('Pas assez de crédits !','err');return;}
+        D.coins-=item.price;_dashOwnedSkins[item.id]=true;
+        db.ref('users/'+CU.id+'/coins').set(D.coins);
+        db.ref('users/'+CU.id+'/dashOwnedSkins/'+item.id).set(true);
+        D.skin=item.color;db.ref('users/'+CU.id+'/dashSkin').set(item.color);
+        syncDashCoins();toast('Acheté et équipé !','ok');renderDashShopTab();
+      });}
+      row.appendChild(sq);row.appendChild(info);row.appendChild(btn);cont.appendChild(row);
+    });
+  } else {
+    DASH_DECALS.forEach(function(item){
+      var isOwned=!!(_dashOwnedDecals&&_dashOwnedDecals[item.id])||item.price===0;
+      var isActive=D.decal===item.draw;
+      var row=document.createElement('div');
+      row.style.cssText='background:var(--s2);border:1px solid '+(isActive?'var(--accent)':'var(--border)')+';border-radius:12px;padding:12px;display:flex;align-items:center;gap:12px';
+      var prev=document.createElement('canvas');prev.width=44;prev.height=44;prev.style.cssText='flex-shrink:0;border-radius:9px;background:var(--s3)';
+      var pctx=prev.getContext('2d');pctx.save();pctx.translate(22,22);pctx.fillStyle=D.skin||'#8b5cf6';roundRectPath(pctx,-15,-15,30,30,6);pctx.fill();dDrawDecal(pctx,30,item.draw);pctx.restore();
+      var info=document.createElement('div');info.style.flex='1';
+      info.innerHTML='<div style="font-size:13px;font-weight:700">'+esc(item.name)+'</div><div style="font-size:11px;color:var(--muted)">'+(isOwned?'Possédé':'💰 '+item.price+' crédits')+'</div>';
+      var btn;
+      if(isActive){btn=cBtn('✓ Équipé','btn btn-ok',null);btn.disabled=true;}
+      else if(isOwned){btn=cBtn('Équiper','btn btn-ghost',function(){D.decal=item.draw;db.ref('users/'+CU.id+'/dashDecal').set(item.draw);toast('Motif équipé !','ok');renderDashShopTab();});}
+      else{btn=cBtn('Acheter','btn btn-accent',function(){
+        if(D.coins<item.price){toast('Pas assez de crédits !','err');return;}
+        D.coins-=item.price;_dashOwnedDecals[item.id]=true;
+        db.ref('users/'+CU.id+'/coins').set(D.coins);
+        db.ref('users/'+CU.id+'/dashOwnedDecals/'+item.id).set(true);
+        D.decal=item.draw;db.ref('users/'+CU.id+'/dashDecal').set(item.draw);
+        syncDashCoins();toast('Acheté et équipé !','ok');renderDashShopTab();
+      });}
+      row.appendChild(prev);row.appendChild(info);row.appendChild(btn);cont.appendChild(row);
+    });
+  }
 }
 
 function toggleMob(){document.getElementById('sidebar').classList.toggle('mob-open')}
