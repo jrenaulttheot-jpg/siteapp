@@ -31,6 +31,13 @@ html,body{height:100%;overflow:hidden}
 body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh}
 .hide{display:none!important}
 .page{display:none;width:100%;height:100vh;flex-direction:column}
+.cbtn{background:var(--s2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:20px;font-weight:700;padding:14px 8px;cursor:pointer;transition:all .15s;font-family:'Sora',sans-serif;touch-action:manipulation}
+.cbtn:active{transform:scale(.93);background:var(--s3)}
+.cbtn-fn{background:var(--s1);color:var(--muted);font-size:13px}
+.cbtn-fn:active{background:var(--s2)}
+.cbtn-op{color:var(--acc2);border-color:rgba(109,40,217,.3)}
+.cbtn-eq{background:var(--accent);color:#fff;border-color:var(--accent);font-size:22px}
+.cbtn-eq:active{background:#7c3aed}
 .page.active{display:flex}
 input,textarea{font-family:'Sora',sans-serif}
 input:focus,textarea:focus{outline:none}
@@ -367,6 +374,146 @@ input:focus,textarea:focus{outline:none}
       <button class="btn-main" id="rgBtn" onclick="doRegister()">Créer mon compte →</button>
     </div>
     <div class="auth-err" id="authErr"></div>
+  </div>
+</div>
+
+<!-- CALC PAGE -->
+<div class="page" id="calcPage" style="flex-direction:column;background:var(--bg);overflow:hidden">
+  <div class="home-top">
+    <button class="h-ibtn" onclick="backToHome()">🏠</button>
+    <span style="flex:1;text-align:center;font-weight:800;font-size:15px">🧮 Calculatrice</span>
+    <div class="admin-tabs" style="margin:0;border:none;background:none">
+      <button class="atab active" id="calcTabStd" onclick="switchCalcTab('std')">Standard</button>
+      <button class="atab" id="calcTabSci" onclick="switchCalcTab('sci')">Scientifique</button>
+      <button class="atab" id="calcTabConv" onclick="switchCalcTab('conv')">Conversions</button>
+    </div>
+  </div>
+
+  <!-- MODE STANDARD -->
+  <div id="calcStd" style="display:flex;flex-direction:column;flex:1;padding:14px;gap:10px;overflow-y:auto">
+    <div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:14px 18px">
+      <div id="calcExpr" style="font-size:12px;color:var(--muted);min-height:18px;text-align:right;word-break:break-all">0</div>
+      <div id="calcDisp" style="font-size:36px;font-weight:800;text-align:right;word-break:break-all;line-height:1.2;margin-top:4px">0</div>
+    </div>
+    <div id="calcHistory" style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:10px;max-height:90px;overflow-y:auto;font-size:12px;color:var(--muted);display:none"></div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;flex:1">
+      <button class="cbtn cbtn-fn" onclick="cInput('MC')">MC</button>
+      <button class="cbtn cbtn-fn" onclick="cInput('MR')">MR</button>
+      <button class="cbtn cbtn-fn" onclick="cInput('M+')">M+</button>
+      <button class="cbtn cbtn-fn" onclick="cInput('M-')">M-</button>
+      <button class="cbtn cbtn-fn" onclick="cInput('C')">C</button>
+      <button class="cbtn cbtn-fn" onclick="cInput('CE')">CE</button>
+      <button class="cbtn cbtn-fn" onclick="cInput('%')">%</button>
+      <button class="cbtn cbtn-op" onclick="cInput('/'">÷</button>
+      <button class="cbtn" onclick="cInput('7')">7</button>
+      <button class="cbtn" onclick="cInput('8')">8</button>
+      <button class="cbtn" onclick="cInput('9')">9</button>
+      <button class="cbtn cbtn-op" onclick="cInput('*')">×</button>
+      <button class="cbtn" onclick="cInput('4')">4</button>
+      <button class="cbtn" onclick="cInput('5')">5</button>
+      <button class="cbtn" onclick="cInput('6')">6</button>
+      <button class="cbtn cbtn-op" onclick="cInput('-')">−</button>
+      <button class="cbtn" onclick="cInput('1')">1</button>
+      <button class="cbtn" onclick="cInput('2')">2</button>
+      <button class="cbtn" onclick="cInput('3')">3</button>
+      <button class="cbtn cbtn-op" onclick="cInput('+')">+</button>
+      <button class="cbtn cbtn-fn" onclick="cInput('+/-')">±</button>
+      <button class="cbtn" onclick="cInput('0')">0</button>
+      <button class="cbtn" onclick="cInput('.')">.</button>
+      <button class="cbtn cbtn-eq" onclick="cInput('=')">=</button>
+    </div>
+  </div>
+
+  <!-- MODE SCIENTIFIQUE -->
+  <div id="calcSci" style="display:none;flex-direction:column;flex:1;padding:14px;gap:10px;overflow-y:auto">
+    <div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:14px 18px">
+      <div id="sciExpr" style="font-size:11px;color:var(--muted);min-height:16px;text-align:right;word-break:break-all"></div>
+      <div id="sciDisp" style="font-size:32px;font-weight:800;text-align:right;word-break:break-all;line-height:1.2;margin-top:4px">0</div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px"><input type="radio" name="sciAngle" value="deg" checked onchange="sciAngleMode=this.value" style="accent-color:var(--accent)">DEG</label>
+        <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px"><input type="radio" name="sciAngle" value="rad" onchange="sciAngleMode=this.value" style="accent-color:var(--accent)">RAD</label>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">
+      <button class="cbtn cbtn-fn" style="font-size:11px" onclick="sciFunc('sin')">sin</button>
+      <button class="cbtn cbtn-fn" style="font-size:11px" onclick="sciFunc('cos')">cos</button>
+      <button class="cbtn cbtn-fn" style="font-size:11px" onclick="sciFunc('tan')">tan</button>
+      <button class="cbtn cbtn-fn" style="font-size:11px" onclick="sciFunc('asin')">sin⁻¹</button>
+      <button class="cbtn cbtn-fn" style="font-size:11px" onclick="sciFunc('acos')">cos⁻¹</button>
+      <button class="cbtn cbtn-fn" style="font-size:11px" onclick="sciFunc('atan')">tan⁻¹</button>
+      <button class="cbtn cbtn-fn" style="font-size:11px" onclick="sciFunc('log')">log</button>
+      <button class="cbtn cbtn-fn" style="font-size:11px" onclick="sciFunc('ln')">ln</button>
+      <button class="cbtn cbtn-fn" style="font-size:11px" onclick="sciFunc('sqrt')">√</button>
+      <button class="cbtn cbtn-fn" style="font-size:11px" onclick="sciFunc('cbrt')">∛</button>
+      <button class="cbtn cbtn-fn" style="font-size:11px" onclick="sciFunc('sq')">x²</button>
+      <button class="cbtn cbtn-fn" style="font-size:11px" onclick="sciFunc('cube')">x³</button>
+      <button class="cbtn cbtn-fn" style="font-size:11px" onclick="sciAppend('^')">xʸ</button>
+      <button class="cbtn cbtn-fn" style="font-size:11px" onclick="sciFunc('inv')">1/x</button>
+      <button class="cbtn cbtn-fn" style="font-size:11px" onclick="sciFunc('fact')">n!</button>
+      <button class="cbtn cbtn-fn" style="font-size:11px" onclick="sciAppend('Math.PI')">π</button>
+      <button class="cbtn cbtn-fn" style="font-size:11px" onclick="sciAppend('Math.E')">e</button>
+      <button class="cbtn cbtn-fn" style="font-size:11px" onclick="sciFunc('abs')">|x|</button>
+      <button class="cbtn cbtn-fn" style="font-size:11px" onclick="sciAppend('(')"> ( </button>
+      <button class="cbtn cbtn-fn" style="font-size:11px" onclick="sciAppend(')')"> ) </button>
+      <button class="cbtn cbtn-fn" style="font-size:11px" onclick="sciFunc('C')">C</button>
+      <button class="cbtn" style="font-size:13px" onclick="sciAppend('7')">7</button>
+      <button class="cbtn" style="font-size:13px" onclick="sciAppend('8')">8</button>
+      <button class="cbtn" style="font-size:13px" onclick="sciAppend('9')">9</button>
+      <button class="cbtn cbtn-op" style="font-size:13px" onclick="sciAppend('/'">÷</button>
+      <button class="cbtn cbtn-fn" style="font-size:13px" onclick="sciFunc('CE')">CE</button>
+      <button class="cbtn" style="font-size:13px" onclick="sciAppend('4')">4</button>
+      <button class="cbtn" style="font-size:13px" onclick="sciAppend('5')">5</button>
+      <button class="cbtn" style="font-size:13px" onclick="sciAppend('6')">6</button>
+      <button class="cbtn cbtn-op" style="font-size:13px" onclick="sciAppend('*')">×</button>
+      <button class="cbtn cbtn-op" style="font-size:13px" onclick="sciAppend('-')">−</button>
+      <button class="cbtn" style="font-size:13px" onclick="sciAppend('1')">1</button>
+      <button class="cbtn" style="font-size:13px" onclick="sciAppend('2')">2</button>
+      <button class="cbtn" style="font-size:13px" onclick="sciAppend('3')">3</button>
+      <button class="cbtn cbtn-op" style="font-size:13px" onclick="sciAppend('+')">+</button>
+      <button class="cbtn cbtn-op" style="font-size:13px" onclick="sciAppend('%')">%</button>
+      <button class="cbtn" style="font-size:13px;grid-column:span 2" onclick="sciAppend('0')">0</button>
+      <button class="cbtn" style="font-size:13px" onclick="sciAppend('.')">.</button>
+      <button class="cbtn cbtn-eq" style="font-size:13px;grid-column:span 2" onclick="sciCalc()">=</button>
+    </div>
+  </div>
+
+  <!-- MODE CONVERSIONS -->
+  <div id="calcConv" style="display:none;flex-direction:column;flex:1;padding:14px;gap:12px;overflow-y:auto">
+    <div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:12px">
+      <div class="section-title" style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Catégorie</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="cbtn cbtn-fn" style="font-size:11px" onclick="setConvCat('length')">📏 Longueur</button>
+        <button class="cbtn cbtn-fn" style="font-size:11px" onclick="setConvCat('weight')">⚖️ Masse</button>
+        <button class="cbtn cbtn-fn" style="font-size:11px" onclick="setConvCat('temp')">🌡️ Température</button>
+        <button class="cbtn cbtn-fn" style="font-size:11px" onclick="setConvCat('speed')">💨 Vitesse</button>
+        <button class="cbtn cbtn-fn" style="font-size:11px" onclick="setConvCat('area')">📐 Surface</button>
+        <button class="cbtn cbtn-fn" style="font-size:11px" onclick="setConvCat('volume')">🧪 Volume</button>
+        <button class="cbtn cbtn-fn" style="font-size:11px" onclick="setConvCat('time')">⏱️ Temps</button>
+        <button class="cbtn cbtn-fn" style="font-size:11px" onclick="setConvCat('data')">💾 Données</button>
+      </div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;gap:10px;align-items:center">
+        <div style="flex:1">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">De</div>
+          <select id="convFrom" onchange="doConvert()" style="width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:7px;color:var(--text);font-size:12px"></select>
+        </div>
+        <button onclick="swapConv()" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--muted);cursor:pointer;font-size:16px;margin-top:18px;flex-shrink:0">⇄</button>
+        <div style="flex:1">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">Vers</div>
+          <select id="convTo" onchange="doConvert()" style="width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:7px;color:var(--text);font-size:12px"></select>
+        </div>
+      </div>
+      <input type="number" id="convInput" placeholder="Valeur à convertir" oninput="doConvert()" style="width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:16px;font-weight:700">
+      <div style="background:var(--s2);border:1px solid var(--accent);border-radius:10px;padding:12px;text-align:center">
+        <div id="convResult" style="font-size:24px;font-weight:800;color:var(--acc2)">–</div>
+        <div id="convFormula" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
+      </div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:12px">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Toutes les conversions</div>
+      <div id="convAll" style="display:flex;flex-direction:column;gap:6px"></div>
+    </div>
   </div>
 </div>
 
@@ -1808,6 +1955,7 @@ var APPS=[
   {id:'chat',name:'ChatRoom',icon:'💬'},
   {id:'game',name:'Battle Royale',icon:'🎮'},
   {id:'dash',name:'Bloc Dash',icon:'🔺'},
+  {id:'calc',name:'Calculatrice',icon:'🧮'}
 ];
 
 function backToHome(){
@@ -1822,6 +1970,7 @@ function goToApp(id){
   if(id==='chat'){showPage('appPage');refreshGroupList();refreshFriendList();}
   else if(id==='game'){goToGame();}
   else if(id==='dash'){goToDash();}
+  else if(id==='calc'){showPage('calcPage');}
 }
 
 function renderHome(){
@@ -3006,6 +3155,248 @@ function renderDashShopTab(){
     });
   }
 }
+
+/* ══════════════════════════════
+   CALCULATRICE
+══════════════════════════════ */
+var calcCurrent='0',calcPrev='',calcOp=null,calcNewNum=true,calcMem=0;
+var sciExpr='',sciAngleMode='deg';
+var convCat='length';
+
+/* ── onglets ── */
+function switchCalcTab(t){
+  ['std','sci','conv'].forEach(function(x){
+    document.getElementById('calcTab'+x.charAt(0).toUpperCase()+x.slice(1)).classList.toggle('active',x===t);
+    document.getElementById('calc'+x.charAt(0).toUpperCase()+x.slice(1)).style.display=x===t?(t==='std'?'flex':t==='sci'?'flex':'flex'):'none';
+  });
+  if(t==='conv'){setConvCat(convCat);}
+}
+
+/* ── STANDARD ── */
+function cInput(v){
+  var d=document.getElementById('calcDisp');
+  var e=document.getElementById('calcExpr');
+  if(v==='C'){calcCurrent='0';calcPrev='';calcOp=null;calcNewNum=true;d.textContent='0';e.textContent='';return;}
+  if(v==='CE'){calcCurrent='0';calcNewNum=true;d.textContent='0';return;}
+  if(v==='MC'){calcMem=0;toast('Mémoire effacée','info');return;}
+  if(v==='MR'){calcCurrent=String(calcMem);calcNewNum=true;d.textContent=calcMem;return;}
+  if(v==='M+'){calcMem+=parseFloat(calcCurrent)||0;toast('Mémoire : '+calcMem,'info');return;}
+  if(v==='M-'){calcMem-=parseFloat(calcCurrent)||0;toast('Mémoire : '+calcMem,'info');return;}
+  if(v==='%'){calcCurrent=String(parseFloat(calcCurrent)/100);d.textContent=fmtNum(calcCurrent);return;}
+  if(v==='+/-'){calcCurrent=String(-parseFloat(calcCurrent));d.textContent=fmtNum(calcCurrent);return;}
+  if(['+','-','*','/'].indexOf(v)>-1){
+    if(calcOp&&!calcNewNum){calcApply();}
+    calcPrev=calcCurrent;calcOp=v;calcNewNum=true;
+    e.textContent=fmtNum(calcPrev)+' '+{'+':'+','-':'−','*':'×','/':'÷'}[v];
+    return;
+  }
+  if(v==='='){
+    if(!calcOp)return;
+    e.textContent=fmtNum(calcPrev)+' '+{'+':'+','-':'−','*':'×','/':'÷'}[calcOp]+' '+fmtNum(calcCurrent)+' =';
+    calcApply();
+    calcOp=null;calcNewNum=true;
+    addCalcHistory(e.textContent+' '+d.textContent);
+    return;
+  }
+  if(v==='.'){
+    if(calcNewNum){calcCurrent='0.';calcNewNum=false;}
+    else if(calcCurrent.indexOf('.')===-1)calcCurrent+='.';
+    d.textContent=calcCurrent;return;
+  }
+  if(calcNewNum){calcCurrent=v;calcNewNum=false;}
+  else{calcCurrent=calcCurrent==='0'?v:calcCurrent+v;}
+  if(calcCurrent.length>14)calcCurrent=calcCurrent.slice(0,14);
+  d.textContent=fmtNum(calcCurrent);
+}
+function calcApply(){
+  var a=parseFloat(calcPrev),b=parseFloat(calcCurrent),r;
+  if(calcOp==='+')r=a+b;else if(calcOp==='-')r=a-b;else if(calcOp==='*')r=a*b;
+  else if(calcOp==='/')r=b===0?'Erreur':a/b;
+  calcCurrent=String(r);
+  document.getElementById('calcDisp').textContent=fmtNum(calcCurrent);
+}
+function fmtNum(n){
+  var num=parseFloat(n);if(isNaN(num))return n;
+  if(Math.abs(num)>=1e12||Math.abs(num)<1e-8&&num!==0)return num.toExponential(5);
+  return parseFloat(num.toPrecision(12)).toString();
+}
+function addCalcHistory(h){
+  var hist=document.getElementById('calcHistory');
+  hist.style.display='block';
+  var row=document.createElement('div');row.style.cssText='padding:3px 0;border-bottom:1px solid var(--border);text-align:right';
+  row.textContent=h;hist.insertBefore(row,hist.firstChild);
+  if(hist.children.length>8)hist.removeChild(hist.lastChild);
+}
+
+/* ── SCIENTIFIQUE ── */
+function toRad(v){return sciAngleMode==='deg'?v*Math.PI/180:v;}
+function toDeg(v){return sciAngleMode==='deg'?v*180/Math.PI:v;}
+function sciAppend(v){
+  sciExpr+=v;
+  document.getElementById('sciExpr').textContent=sciExpr;
+  document.getElementById('sciDisp').textContent=sciExpr.length>30?sciExpr.slice(-30):sciExpr;
+}
+function sciFunc(fn){
+  var d=document.getElementById('sciDisp');
+  var ex=document.getElementById('sciExpr');
+  if(fn==='C'){sciExpr='';d.textContent='0';ex.textContent='';return;}
+  if(fn==='CE'){sciExpr=sciExpr.slice(0,-1);d.textContent=sciExpr||'0';ex.textContent=sciExpr;return;}
+  var v=parseFloat(sciExpr);
+  if(fn==='sq'){sciExpr=String(v*v);}
+  else if(fn==='cube'){sciExpr=String(v*v*v);}
+  else if(fn==='sqrt'){sciExpr=String(Math.sqrt(v));}
+  else if(fn==='cbrt'){sciExpr=String(Math.cbrt(v));}
+  else if(fn==='inv'){sciExpr=String(1/v);}
+  else if(fn==='abs'){sciExpr=String(Math.abs(v));}
+  else if(fn==='log'){sciExpr=String(Math.log10(v));}
+  else if(fn==='ln'){sciExpr=String(Math.log(v));}
+  else if(fn==='sin'){sciExpr=String(Math.sin(toRad(v)));}
+  else if(fn==='cos'){sciExpr=String(Math.cos(toRad(v)));}
+  else if(fn==='tan'){sciExpr=String(Math.tan(toRad(v)));}
+  else if(fn==='asin'){sciExpr=String(toDeg(Math.asin(v)));}
+  else if(fn==='acos'){sciExpr=String(toDeg(Math.acos(v)));}
+  else if(fn==='atan'){sciExpr=String(toDeg(Math.atan(v)));}
+  else if(fn==='fact'){sciExpr=String(sciFactorial(Math.round(v)));}
+  var num=parseFloat(sciExpr);
+  d.textContent=fmtNum(isNaN(num)?sciExpr:String(num));
+  ex.textContent=sciExpr;
+}
+function sciCalc(){
+  try{
+    var expr=sciExpr.replace(/\^/g,'**');
+    var result=Function('"use strict";return ('+expr+')')();
+    document.getElementById('sciExpr').textContent=sciExpr+' =';
+    sciExpr=String(result);
+    document.getElementById('sciDisp').textContent=fmtNum(String(result));
+  }catch(e){document.getElementById('sciDisp').textContent='Erreur';}
+}
+function sciFactorial(n){if(n<0)return NaN;if(n===0||n===1)return 1;var r=1;for(var i=2;i<=n;i++)r*=i;return r;}
+
+/* ── CONVERSIONS ── */
+var CONV_CATS={
+  length:{label:'Longueur',units:[
+    {id:'m',label:'Mètre (m)',toBase:1},
+    {id:'km',label:'Kilomètre (km)',toBase:1000},
+    {id:'cm',label:'Centimètre (cm)',toBase:0.01},
+    {id:'mm',label:'Millimètre (mm)',toBase:0.001},
+    {id:'mi',label:'Mile (mi)',toBase:1609.344},
+    {id:'yd',label:'Yard (yd)',toBase:0.9144},
+    {id:'ft',label:'Pied (ft)',toBase:0.3048},
+    {id:'in',label:'Pouce (in)',toBase:0.0254},
+    {id:'nm',label:'Mille marin (nm)',toBase:1852},
+    {id:'ly',label:'Année-lumière',toBase:9.461e15}
+  ]},
+  weight:{label:'Masse',units:[
+    {id:'kg',label:'Kilogramme (kg)',toBase:1},
+    {id:'g',label:'Gramme (g)',toBase:0.001},
+    {id:'mg',label:'Milligramme (mg)',toBase:1e-6},
+    {id:'t',label:'Tonne (t)',toBase:1000},
+    {id:'lb',label:'Livre (lb)',toBase:0.453592},
+    {id:'oz',label:'Once (oz)',toBase:0.0283495}
+  ]},
+  temp:{label:'Température',units:[
+    {id:'C',label:'Celsius (°C)'},
+    {id:'F',label:'Fahrenheit (°F)'},
+    {id:'K',label:'Kelvin (K)'}
+  ]},
+  speed:{label:'Vitesse',units:[
+    {id:'ms',label:'m/s',toBase:1},
+    {id:'kmh',label:'km/h',toBase:0.277778},
+    {id:'mph',label:'mph',toBase:0.44704},
+    {id:'kn',label:'Nœud (kn)',toBase:0.514444},
+    {id:'mach',label:'Mach',toBase:340.29}
+  ]},
+  area:{label:'Surface',units:[
+    {id:'m2',label:'m²',toBase:1},
+    {id:'km2',label:'km²',toBase:1e6},
+    {id:'cm2',label:'cm²',toBase:1e-4},
+    {id:'ha',label:'Hectare (ha)',toBase:10000},
+    {id:'ac',label:'Acre (ac)',toBase:4046.86},
+    {id:'ft2',label:'ft²',toBase:0.0929}
+  ]},
+  volume:{label:'Volume',units:[
+    {id:'l',label:'Litre (L)',toBase:1},
+    {id:'ml',label:'Millilitre (mL)',toBase:0.001},
+    {id:'m3',label:'m³',toBase:1000},
+    {id:'cl',label:'Centilitre (cL)',toBase:0.01},
+    {id:'gal',label:'Gallon US (gal)',toBase:3.78541},
+    {id:'fl',label:'Fluid oz (fl oz)',toBase:0.0295735},
+    {id:'pt',label:'Pinte (pt)',toBase:0.473176},
+    {id:'tsp',label:'Cuillère à café',toBase:0.00492892},
+    {id:'tbsp',label:'Cuillère à soupe',toBase:0.0147868}
+  ]},
+  time:{label:'Temps',units:[
+    {id:'s',label:'Seconde (s)',toBase:1},
+    {id:'ms2',label:'Milliseconde (ms)',toBase:0.001},
+    {id:'min',label:'Minute (min)',toBase:60},
+    {id:'h',label:'Heure (h)',toBase:3600},
+    {id:'d',label:'Jour (j)',toBase:86400},
+    {id:'wk',label:'Semaine',toBase:604800},
+    {id:'mo',label:'Mois (30j)',toBase:2592000},
+    {id:'yr',label:'Année (365j)',toBase:31536000}
+  ]},
+  data:{label:'Données',units:[
+    {id:'b',label:'Bit (b)',toBase:1},
+    {id:'B',label:'Octet (B)',toBase:8},
+    {id:'KB',label:'Kilooctet (KB)',toBase:8192},
+    {id:'MB',label:'Mégaoctet (MB)',toBase:8388608},
+    {id:'GB',label:'Gigaoctet (GB)',toBase:8589934592},
+    {id:'TB',label:'Téraoctet (TB)',toBase:8796093022208}
+  ]}
+};
+
+function setConvCat(cat){
+  convCat=cat;
+  var units=CONV_CATS[cat].units;
+  ['convFrom','convTo'].forEach(function(id,i){
+    var sel=document.getElementById(id);sel.innerHTML='';
+    units.forEach(function(u,idx){var o=document.createElement('option');o.value=u.id;o.textContent=u.label;sel.appendChild(o);});
+    if(id==='convTo'&&units.length>1)sel.selectedIndex=1;
+  });
+  doConvert();
+}
+function swapConv(){
+  var f=document.getElementById('convFrom').value,t=document.getElementById('convTo').value;
+  document.getElementById('convFrom').value=t;document.getElementById('convTo').value=f;
+  doConvert();
+}
+function doConvert(){
+  var val=parseFloat(document.getElementById('convInput').value);
+  if(isNaN(val)){document.getElementById('convResult').textContent='–';document.getElementById('convAll').innerHTML='';return;}
+  var from=document.getElementById('convFrom').value;
+  var to=document.getElementById('convTo').value;
+  var units=CONV_CATS[convCat].units;
+  var fromU=units.find(function(u){return u.id===from;});
+  var toU=units.find(function(u){return u.id===to;});
+  var result=convCalc(val,from,to,units);
+  document.getElementById('convResult').textContent=fmtNum(String(result))+' '+toU.label.split(' ')[0];
+  document.getElementById('convFormula').textContent=val+' '+fromU.label.split(' ')[0]+' = '+fmtNum(String(result))+' '+toU.label.split(' ')[0];
+  // Toutes les conversions
+  var allDiv=document.getElementById('convAll');allDiv.innerHTML='';
+  units.forEach(function(u){
+    if(u.id===from)return;
+    var r=convCalc(val,from,u.id,units);
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px';
+    row.innerHTML='<span style="color:var(--muted)">'+u.label+'</span><span style="font-weight:700">'+fmtNum(String(r))+'</span>';
+    allDiv.appendChild(row);
+  });
+}
+function convCalc(val,from,to,units){
+  if(convCat==='temp'){
+    var c;
+    if(from==='C')c=val;else if(from==='F')c=(val-32)*5/9;else c=val-273.15;
+    if(to==='C')return Math.round(c*1e8)/1e8;
+    if(to==='F')return Math.round((c*9/5+32)*1e8)/1e8;
+    return Math.round((c+273.15)*1e8)/1e8;
+  }
+  var fu=units.find(function(u){return u.id===from;});
+  var tu=units.find(function(u){return u.id===to;});
+  return val*fu.toBase/tu.toBase;
+}
+
+// Init conversions au chargement
+setConvCat('length');
 
 function toggleMob(){document.getElementById('sidebar').classList.toggle('mob-open')}
 function closeMob(){document.getElementById('sidebar').classList.remove('mob-open')}
