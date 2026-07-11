@@ -377,6 +377,88 @@ input:focus,textarea:focus{outline:none}
   </div>
 </div>
 
+<!-- NOVA STRIKE PAGE -->
+<div class="page" id="novaPage" style="flex-direction:column;background:#000;position:relative;overflow:hidden">
+  <div class="game-top">
+    <button class="hbtn" onclick="leaveNova()" style="flex-shrink:0">← Accueil</button>
+    <span style="flex:1;font-weight:800;font-size:14px;text-align:center;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent">🚀 NOVA STRIKE</span>
+    <span id="novaCoinsDisplay" style="font-size:13px;color:#fcd34d;font-weight:700;flex-shrink:0">💰 0</span>
+  </div>
+  <canvas id="novaCanvas"></canvas>
+  <!-- HUD -->
+  <div id="novaHud" style="position:absolute;inset:50px 0 0 0;pointer-events:none;display:none">
+    <div style="position:absolute;top:10px;left:14px;display:flex;flex-direction:column;gap:4px">
+      <div style="font-size:11px;color:rgba(255,255,255,.5)">VIE</div>
+      <div style="display:flex;gap:3px" id="novaHearts"></div>
+    </div>
+    <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);text-align:center">
+      <div style="font-size:11px;color:rgba(255,255,255,.5)">VAGUE</div>
+      <div id="novaWave" style="font-size:18px;font-weight:800;color:#60a5fa">1</div>
+    </div>
+    <div style="position:absolute;top:10px;right:14px;text-align:right">
+      <div style="font-size:11px;color:rgba(255,255,255,.5)">SCORE</div>
+      <div id="novaScore" style="font-size:18px;font-weight:800;color:#fcd34d">0</div>
+    </div>
+    <div id="novaBossBar" style="position:absolute;top:60px;left:50%;transform:translateX(-50%);width:240px;display:none;text-align:center">
+      <div style="font-size:10px;color:#f87171;margin-bottom:3px">👾 BOSS</div>
+      <div style="height:8px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden">
+        <div id="novaBossFill" style="height:100%;background:linear-gradient(90deg,#ef4444,#f97316);border-radius:4px;transition:width .2s"></div>
+      </div>
+    </div>
+    <div id="novaPowerupText" style="position:absolute;top:80px;left:50%;transform:translateX(-50%);font-size:13px;font-weight:700;color:#4ade80;text-align:center;pointer-events:none;display:none"></div>
+    <!-- Joystick zone -->
+    <div id="novaJoyBase" class="joystick-base" style="pointer-events:none"><div class="joystick-knob" id="novaJoyKnob"></div></div>
+    <!-- Fire button -->
+    <div style="position:absolute;bottom:30px;right:24px;width:70px;height:70px;border-radius:50%;background:rgba(239,68,68,.2);border:2px solid rgba(239,68,68,.5);display:flex;align-items:center;justify-content:center;font-size:26px;pointer-events:auto;touch-action:none;user-select:none" id="novaFireBtn">🔥</div>
+    <!-- Bomb button -->
+    <div style="position:absolute;bottom:110px;right:24px;width:50px;height:50px;border-radius:50%;background:rgba(251,191,36,.15);border:2px solid rgba(251,191,36,.4);display:flex;align-items:center;justify-content:center;font-size:20px;pointer-events:auto;touch-action:none" id="novaBombBtn">💣<span id="novaBombCount" style="position:absolute;top:-4px;right:-4px;background:#fcd34d;color:#000;font-size:9px;font-weight:800;border-radius:10px;padding:1px 4px">0</span></div>
+  </div>
+  <!-- Start screen -->
+  <div id="novaStartScreen" style="position:absolute;inset:50px 0 0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center">
+    <div style="font-size:60px">🚀</div>
+    <h2 style="font-size:24px;font-weight:800;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent">NOVA STRIKE</h2>
+    <p style="color:var(--muted);font-size:13px;max-width:280px;line-height:1.6">Détruis les vagues d'ennemis, collecte des power-ups, survie aux boss. Score = crédits.</p>
+    <div style="display:flex;gap:10px;width:100%;max-width:300px">
+      <div style="flex:1;background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:10px">
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Ton record</div>
+        <div style="font-size:18px;font-weight:800;color:#fcd34d" id="novaBestStart">0</div>
+      </div>
+      <div style="flex:1;background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:10px">
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Record du site</div>
+        <div style="font-size:18px;font-weight:800;color:#a78bfa" id="novaGlobalStart">0</div>
+        <div style="font-size:9px;color:var(--muted)" id="novaGlobalHolder"></div>
+      </div>
+    </div>
+    <button class="btn-main" style="max-width:220px" onclick="startNova()">🚀 Jouer</button>
+    <button class="btn btn-ghost" onclick="openNovaShop()">🛒 Boutique</button>
+  </div>
+  <!-- Game over -->
+  <div id="novaOverScreen" style="position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(0,0,0,.88);backdrop-filter:blur(8px);z-index:200;padding:24px;text-align:center">
+    <div style="font-size:52px">💥</div>
+    <h2 style="font-size:28px;font-weight:800;color:#fca5a5">GAME OVER</h2>
+    <p id="novaOverWave" style="color:var(--muted)"></p>
+    <p id="novaOverScore" style="color:#fcd34d;font-weight:800;font-size:20px"></p>
+    <p id="novaOverCoins" style="color:#4ade80;font-weight:700"></p>
+    <p id="novaOverRecord" style="color:#a78bfa;font-weight:700;font-size:13px"></p>
+    <button class="btn-main" style="max-width:200px" onclick="startNova()">🔄 Réessayer</button>
+    <button class="btn btn-ghost" onclick="leaveNova()">🏠 Accueil</button>
+  </div>
+</div>
+
+<!-- NOVA SHOP MODAL -->
+<div class="modal-ov" id="novaShopModal">
+  <div class="modal" style="max-width:440px">
+    <h3>🛒 Boutique Nova Strike</h3>
+    <p class="msub">Solde : <strong id="novaShopCoins" style="color:#fcd34d">0 💰</strong></p>
+    <div class="admin-tabs" style="margin-bottom:12px">
+      <button class="atab active" id="novaTabShip" onclick="switchNovaShopTab('ship')">🚀 Vaisseaux</button>
+      <button class="atab" id="novaTabWeapon" onclick="switchNovaShopTab('weapon')">🔫 Armes</button>
+    </div>
+    <div id="novaShopItems" style="max-height:55vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px"></div>
+    <div class="modal-acts"><button class="btn btn-ghost" onclick="closeModal('novaShopModal')">Fermer</button></div>
+  </div>
+</div>
+
 <!-- CALC PAGE -->
 <div class="page" id="calcPage" style="flex-direction:column;background:var(--bg);overflow:hidden">
   <div class="home-top">
@@ -1955,7 +2037,8 @@ var APPS=[
   {id:'chat',name:'ChatRoom',icon:'💬'},
   {id:'game',name:'Battle Royale',icon:'🎮'},
   {id:'dash',name:'Bloc Dash',icon:'🔺'},
-  {id:'calc',name:'Calculatrice',icon:'🧮'}
+  {id:'calc',name:'Calculatrice',icon:'🧮'},
+  {id:'nova',name:'Nova Strike',icon:'🚀'}
 ];
 
 function backToHome(){
@@ -1971,6 +2054,7 @@ function goToApp(id){
   else if(id==='game'){goToGame();}
   else if(id==='dash'){goToDash();}
   else if(id==='calc'){showPage('calcPage');}
+  else if(id==='nova'){goToNova();}
 }
 
 function renderHome(){
@@ -3397,6 +3481,549 @@ function convCalc(val,from,to,units){
 
 // Init conversions au chargement
 setConvCat('length');
+
+/* ══════════════════════════════
+   NOVA STRIKE
+══════════════════════════════ */
+var NOVA_SHIPS=[
+  {id:'def',name:'Chasseur',color:'#60a5fa',price:0,lives:3,speed:1},
+  {id:'fast',name:'Intercepteur',color:'#4ade80',price:200,lives:2,speed:1.5},
+  {id:'tank',name:'Cuirassé',color:'#f87171',price:280,lives:5,speed:0.7},
+  {id:'stealth',name:'Fantôme',color:'#a78bfa',price:350,lives:3,speed:1.2},
+  {id:'gold',name:'Titan Doré',color:'#fbbf24',price:600,lives:4,speed:1.1}
+];
+var NOVA_WEAPONS=[
+  {id:'single',name:'Canon Simple',price:0,desc:'1 tir rapide'},
+  {id:'double',name:'Double Canon',price:150,desc:'2 tirs simultanés'},
+  {id:'triple',name:'Triple Rafale',price:250,desc:'3 tirs en éventail'},
+  {id:'laser',name:'Laser Continu',price:400,desc:'Faisceau pénétrant'},
+  {id:'spread',name:'Mitraillette',price:500,desc:'5 tirs dispersés + rapid fire'}
+];
+
+var NV={running:false,canvas:null,ctx:null,raf:null,lastT:0,
+  player:null,bullets:[],enemies:[],enemyBullets:[],particles:[],powerups:[],
+  wave:1,score:0,coins:0,bombs:0,
+  joy:{id:-1,dx:0,dy:0},firing:false,fireId:-1,fireTimer:0,
+  ship:'def',weapon:'single',
+  waveTimer:0,waveActive:false,bossAlive:false,boss:null,
+  ownedShips:{def:true},ownedWeapons:{single:true},
+  novaShopTab:'ship'};
+
+function novaGlobalBest(){
+  var best=0,holder='';
+  Object.keys(usersCache||{}).forEach(function(uid){
+    var b=(usersCache[uid]||{}).novaScore||0;
+    if(b>best){best=b;holder=uid;}
+  });
+  return{best:best,holder:holder};
+}
+function syncNovaCoins(){
+  var el=document.getElementById('novaCoinsDisplay');if(el)el.textContent='💰 '+NV.coins;
+  var sc=document.getElementById('novaShopCoins');if(sc)sc.textContent=NV.coins+' 💰';
+}
+
+function goToNova(){
+  if(!CU)return;
+  showPage('novaPage');
+  db.ref('users/'+CU.id+'/coins').once('value',function(s){NV.coins=s.exists()?s.val():0;syncNovaCoins();});
+  db.ref('users/'+CU.id+'/novaShip').once('value',function(s){NV.ship=s.exists()?s.val():'def';});
+  db.ref('users/'+CU.id+'/novaWeapon').once('value',function(s){NV.weapon=s.exists()?s.val():'single';});
+  db.ref('users/'+CU.id+'/novaOwnedShips').once('value',function(s){NV.ownedShips=s.exists()?s.val():{def:true};NV.ownedShips.def=true;});
+  db.ref('users/'+CU.id+'/novaOwnedWeapons').once('value',function(s){NV.ownedWeapons=s.exists()?s.val():{single:true};NV.ownedWeapons.single=true;});
+  var myBest=(usersCache[CU.id]||{}).novaScore||0;
+  document.getElementById('novaBestStart').textContent=myBest;
+  var gb=novaGlobalBest();
+  document.getElementById('novaGlobalStart').textContent=gb.best;
+  document.getElementById('novaGlobalHolder').textContent=gb.holder?('par '+esc(gb.holder)):'';
+  document.getElementById('novaStartScreen').style.display='flex';
+  document.getElementById('novaOverScreen').style.display='none';
+  document.getElementById('novaHud').style.display='none';
+  document.getElementById('novaCanvas').style.display='none';
+}
+
+function startNova(){
+  var cv=document.getElementById('novaCanvas');
+  NV.canvas=cv;NV.ctx=cv.getContext('2d');
+  cv.width=cv.offsetWidth||window.innerWidth;cv.height=cv.offsetHeight||(window.innerHeight-50);
+  var ship=NOVA_SHIPS.find(function(s){return s.id===NV.ship;})||NOVA_SHIPS[0];
+  NV.player={x:cv.width/2,y:cv.height*0.8,lives:ship.lives,maxLives:ship.lives,ship:ship,invincible:0,trail:[]};
+  NV.bullets=[];NV.enemies=[];NV.enemyBullets=[];NV.particles=[];NV.powerups=[];
+  NV.wave=1;NV.score=0;NV.bombs=2;NV.waveTimer=0;NV.waveActive=false;NV.bossAlive=false;NV.boss=null;NV.fireTimer=0;
+  NV.running=true;NV.lastT=performance.now();NV.joy={id:-1,dx:0,dy:0};NV.firing=false;NV.fireId=-1;
+  document.getElementById('novaStartScreen').style.display='none';
+  document.getElementById('novaOverScreen').style.display='none';
+  document.getElementById('novaHud').style.display='block';
+  cv.style.display='block';
+  novaUpdateHUD();
+  setupNovaInput();
+  window.addEventListener('keydown',nvKeyD);window.addEventListener('keyup',nvKeyU);
+  NV.raf=requestAnimationFrame(nvLoop);
+  spawnWave(1);
+}
+
+var nvKeys={};
+function nvKeyD(e){nvKeys[e.key]=true;if(e.key===' '){e.preventDefault();NV.firing=true;}if(e.key==='b'||e.key==='B')useBomb();}
+function nvKeyU(e){nvKeys[e.key]=false;if(e.key===' ')NV.firing=false;}
+
+function setupNovaInput(){
+  var cv=NV.canvas;
+  cv.ontouchstart=function(e){
+    e.preventDefault();
+    for(var i=0;i<e.changedTouches.length;i++){
+      var t=e.changedTouches[i];
+      var rect=cv.getBoundingClientRect();
+      var tx=t.clientX-rect.left;
+      if(tx<rect.width/2&&NV.joy.id===-1){
+        NV.joy.id=t.identifier;NV.joy.bx=t.clientX;NV.joy.by=t.clientY;NV.joy.dx=0;NV.joy.dy=0;
+        var jb=document.getElementById('novaJoyBase');jb.style.display='block';
+        jb.style.left=(t.clientX-48)+'px';jb.style.top=(t.clientY-48)+'px';
+        document.getElementById('novaJoyKnob').style.left='28px';document.getElementById('novaJoyKnob').style.top='28px';
+      }
+    }
+  };
+  cv.ontouchmove=function(e){
+    e.preventDefault();
+    for(var i=0;i<e.changedTouches.length;i++){
+      var t=e.changedTouches[i];
+      if(t.identifier===NV.joy.id){
+        var dx=t.clientX-NV.joy.bx,dy=t.clientY-NV.joy.by,dist=Math.hypot(dx,dy),mx=44;
+        if(dist>mx){dx=dx/dist*mx;dy=dy/dist*mx;}
+        NV.joy.dx=dx/mx;NV.joy.dy=dy/mx;
+        document.getElementById('novaJoyKnob').style.left=(28+dx)+'px';document.getElementById('novaJoyKnob').style.top=(28+dy)+'px';
+      }
+    }
+  };
+  cv.ontouchend=cv.ontouchcancel=function(e){
+    for(var i=0;i<e.changedTouches.length;i++){
+      var t=e.changedTouches[i];
+      if(t.identifier===NV.joy.id){NV.joy.id=-1;NV.joy.dx=0;NV.joy.dy=0;document.getElementById('novaJoyBase').style.display='none';}
+    }
+  };
+  var fb=document.getElementById('novaFireBtn');
+  fb.ontouchstart=function(e){e.preventDefault();NV.firing=true;NV.fireId=e.changedTouches[0].identifier;};
+  fb.ontouchend=function(e){NV.firing=false;NV.fireId=-1;};
+  document.getElementById('novaBombBtn').onclick=function(){useBomb();};
+}
+
+function nvLoop(ts){
+  if(!NV.running)return;
+  var dt=Math.min((ts-NV.lastT)/1000,.05);NV.lastT=ts;
+  nvUpdate(dt);nvRender();
+  NV.raf=requestAnimationFrame(nvLoop);
+}
+
+function spawnWave(w){
+  NV.waveActive=true;
+  var cv=NV.canvas;
+  var isBoss=w%5===0;
+  if(isBoss){
+    // Boss
+    var bossHp=200+w*60;
+    NV.boss={x:cv.width/2,y:80,hp:bossHp,maxHp:bossHp,w:70,h:50,dx:120,dy:0,shootTimer:0,pattern:0,alive:true};
+    NV.bossAlive=true;
+    document.getElementById('novaBossBar').style.display='block';
+    showNovaPowerup('👾 BOSS DE VAGUE '+w+' !');
+  } else {
+    var count=3+w*2;var rows=Math.min(4,1+Math.floor(w/2));
+    var cols=Math.ceil(count/rows);
+    for(var r=0;r<rows;r++){
+      for(var c=0;c<cols;c++){
+        var type=w>8?'shooter':w>4?'zigzag':'basic';
+        if(r===0&&w>2)type='shooter';
+        NV.enemies.push({
+          x:60+c*(cv.width-120)/(cols-1||1),y:60+r*55,
+          hp:1+(w>5?1:0)+(type==='shooter'?1:0),maxHp:2,
+          type:type,w:30,h:22,
+          t:0,baseX:60+c*(cv.width-120)/(cols-1||1),
+          shootTimer:1+Math.random()*2,alive:true,
+          color:type==='shooter'?'#f87171':type==='zigzag'?'#fb923c':'#60a5fa'
+        });
+      }
+    }
+  }
+}
+
+function nvUpdate(dt){
+  var p=NV.player,cv=NV.canvas;
+  if(!p)return;
+
+  // Mouvement joueur
+  var spd=220*p.ship.speed;
+  var mx=0,my=0;
+  if(nvKeys['ArrowLeft']||nvKeys['a']||nvKeys['q'])mx=-1;
+  if(nvKeys['ArrowRight']||nvKeys['d'])mx=1;
+  if(nvKeys['ArrowUp']||nvKeys['w']||nvKeys['z'])my=-1;
+  if(nvKeys['ArrowDown']||nvKeys['s'])my=1;
+  if(NV.joy.id!==-1){mx=NV.joy.dx;my=NV.joy.dy;}
+  var ml=Math.hypot(mx,my);if(ml>0){mx/=ml;my/=ml;}
+  p.x=Math.max(20,Math.min(cv.width-20,p.x+mx*spd*dt));
+  p.y=Math.max(20,Math.min(cv.height-20,p.y+my*spd*dt));
+  if(p.invincible>0)p.invincible-=dt;
+
+  // Trail
+  p.trail.push({x:p.x,y:p.y});if(p.trail.length>12)p.trail.shift();
+
+  // Tir
+  NV.fireTimer=Math.max(0,NV.fireTimer-dt);
+  var weapon=NV.weapon;
+  var fireRate=weapon==='spread'?0.06:weapon==='laser'?0.03:0.18;
+  if((NV.firing||nvKeys[' '])&&NV.fireTimer<=0){
+    NV.fireTimer=fireRate;
+    spawnPlayerBullets(p,weapon);
+  }
+
+  // Balles joueur
+  NV.bullets=NV.bullets.filter(function(b){
+    b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;
+    if(!b.alive||b.life<=0||b.y<-20||b.x<-20||b.x>cv.width+20)return false;
+    var hit=false;
+    // Ennemis
+    NV.enemies.forEach(function(e){
+      if(!e.alive||hit)return;
+      if(Math.abs(b.x-e.x)<e.w/2+5&&Math.abs(b.y-e.y)<e.h/2+5){
+        e.hp-=b.dmg;b.alive=b.pierce;hit=!b.pierce;
+        spawnParticles(e.x,e.y,e.color,5);
+        if(e.hp<=0){e.alive=false;NV.score+=10+NV.wave*2;novaUpdateHUD();
+          if(Math.random()<0.18)spawnPowerup(e.x,e.y);}
+      }
+    });
+    // Boss
+    if(NV.bossAlive&&NV.boss&&NV.boss.alive){
+      var bx=NV.boss.x,by=NV.boss.y;
+      if(Math.abs(b.x-bx)<NV.boss.w/2+5&&Math.abs(b.y-by)<NV.boss.h/2+5){
+        NV.boss.hp-=b.dmg;b.alive=false;hit=true;
+        spawnParticles(b.x,b.y,'#f97316',4);
+        document.getElementById('novaBossFill').style.width=Math.max(0,NV.boss.hp/NV.boss.maxHp*100)+'%';
+        if(NV.boss.hp<=0){NV.boss.alive=false;NV.bossAlive=false;
+          NV.score+=200+NV.wave*20;NV.bombs++;
+          spawnParticles(NV.boss.x,NV.boss.y,'#f97316',30);
+          document.getElementById('novaBossBar').style.display='none';
+          updateBombCount();
+          showNovaPowerup('🏆 BOSS DÉTRUIT ! +200 pts');
+          novaUpdateHUD();}
+      }
+    }
+    return b.alive&&!hit;
+  });
+
+  // Ennemis
+  NV.enemies.forEach(function(e){
+    if(!e.alive)return;
+    e.t+=dt;
+    if(e.type==='zigzag')e.x=e.baseX+Math.sin(e.t*2.5)*60;
+    else e.x=e.baseX+Math.sin(e.t*0.8)*30;
+    e.y+=28*dt;
+    if(e.type==='shooter'){
+      e.shootTimer-=dt;
+      if(e.shootTimer<=0){e.shootTimer=2+Math.random();spawnEnemyBullet(e.x,e.y);}
+    }
+    if(e.y>cv.height+40)e.alive=false;
+    if(p.invincible<=0&&Math.abs(e.x-p.x)<22&&Math.abs(e.y-p.y)<18){
+      e.alive=false;hitPlayer();
+    }
+  });
+
+  // Boss update
+  if(NV.bossAlive&&NV.boss&&NV.boss.alive){
+    var b=NV.boss;
+    b.x+=b.dx*dt;
+    if(b.x<b.w/2||b.x>cv.width-b.w/2)b.dx*=-1;
+    b.shootTimer-=dt;
+    var shootRate=Math.max(0.3,1.2-NV.wave*0.05);
+    if(b.shootTimer<=0){
+      b.shootTimer=shootRate;
+      b.pattern=(b.pattern+1)%4;
+      if(b.pattern===0)spawnEnemyBullet(b.x,b.y);
+      else if(b.pattern===1){spawnEnemyBullet(b.x-20,b.y);spawnEnemyBullet(b.x+20,b.y);}
+      else if(b.pattern===2){for(var i=-2;i<=2;i++)spawnEnemyBulletAngle(b.x,b.y,Math.PI/2+i*0.25);}
+      else{spawnEnemyBullet(b.x,b.y);spawnEnemyBulletAngle(b.x,b.y,Math.PI/2+0.4);spawnEnemyBulletAngle(b.x,b.y,Math.PI/2-0.4);}
+    }
+    if(p.invincible<=0&&Math.abs(b.x-p.x)<40&&Math.abs(b.y-p.y)<35)hitPlayer();
+  }
+
+  // Balles ennemies
+  NV.enemyBullets=NV.enemyBullets.filter(function(b){
+    b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;
+    if(b.life<=0||b.y>cv.height+20)return false;
+    if(p.invincible<=0&&Math.abs(b.x-p.x)<14&&Math.abs(b.y-p.y)<14){hitPlayer();return false;}
+    return true;
+  });
+
+  // Power-ups
+  NV.powerups=NV.powerups.filter(function(pw){
+    pw.y+=60*dt;pw.t=(pw.t||0)+dt;
+    if(pw.y>cv.height+30)return false;
+    if(Math.abs(pw.x-p.x)<24&&Math.abs(pw.y-p.y)<24){
+      applyPowerup(pw);return false;
+    }
+    return true;
+  });
+
+  // Particules
+  NV.particles=NV.particles.filter(function(pt){
+    pt.x+=pt.vx*dt;pt.y+=pt.vy*dt;pt.life-=dt;pt.vy+=80*dt;
+    return pt.life>0;
+  });
+
+  // Vague suivante ?
+  var alive=NV.enemies.filter(function(e){return e.alive;}).length;
+  if(NV.waveActive&&alive===0&&!NV.bossAlive){
+    NV.waveActive=false;NV.waveTimer=2.5;
+  }
+  if(!NV.waveActive&&NV.waveTimer>0){
+    NV.waveTimer-=dt;
+    if(NV.waveTimer<=0){NV.wave++;spawnWave(NV.wave);novaUpdateHUD();}
+  }
+}
+
+function spawnPlayerBullets(p,weapon){
+  var spd=680;var dmg=1;var pierce=weapon==='laser';
+  if(weapon==='laser')dmg=2;if(weapon==='spread')dmg=1;
+  var ship=p.ship;var col=ship.color;
+  if(weapon==='single'){NV.bullets.push({x:p.x,y:p.y-18,vx:0,vy:-spd,dmg:dmg,pierce:pierce,color:col,alive:true,life:2});}
+  else if(weapon==='double'){NV.bullets.push({x:p.x-10,y:p.y-14,vx:0,vy:-spd,dmg:dmg,pierce:pierce,color:col,alive:true,life:2});NV.bullets.push({x:p.x+10,y:p.y-14,vx:0,vy:-spd,dmg:dmg,pierce:pierce,color:col,alive:true,life:2});}
+  else if(weapon==='triple'){NV.bullets.push({x:p.x,y:p.y-18,vx:0,vy:-spd,dmg:dmg,pierce:pierce,color:col,alive:true,life:2});NV.bullets.push({x:p.x,y:p.y-14,vx:-spd*0.25,vy:-spd*0.97,dmg:dmg,pierce:pierce,color:col,alive:true,life:2});NV.bullets.push({x:p.x,y:p.y-14,vx:spd*0.25,vy:-spd*0.97,dmg:dmg,pierce:pierce,color:col,alive:true,life:2});}
+  else if(weapon==='laser'){NV.bullets.push({x:p.x,y:p.y-18,vx:0,vy:-spd*1.3,dmg:2,pierce:true,color:'#a5f3fc',alive:true,life:2});}
+  else if(weapon==='spread'){for(var i=-2;i<=2;i++)NV.bullets.push({x:p.x,y:p.y-14,vx:spd*0.15*i,vy:-spd*(1-Math.abs(i)*0.04),dmg:1,pierce:false,color:'#fbbf24',alive:true,life:1.5});}
+}
+function spawnEnemyBullet(x,y){NV.enemyBullets.push({x:x,y:y+15,vx:0,vy:220+NV.wave*8,life:4,color:'#fca5a5'});}
+function spawnEnemyBulletAngle(x,y,angle){var spd=200+NV.wave*8;NV.enemyBullets.push({x:x,y:y,vx:Math.cos(angle)*spd,vy:Math.sin(angle)*spd,life:4,color:'#fca5a5'});}
+
+function spawnParticles(x,y,color,n){
+  for(var i=0;i<n;i++){
+    var a=Math.random()*Math.PI*2,spd=60+Math.random()*120;
+    NV.particles.push({x:x,y:y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd,color:color,life:0.5+Math.random()*0.4,maxLife:0.9});
+  }
+}
+
+function spawnPowerup(x,y){
+  var types=['shield','rapid','triple','bomb','heal','score'];
+  var type=types[Math.floor(Math.random()*types.length)];
+  var icons={shield:'🛡️',rapid:'⚡',triple:'🔱',bomb:'💣',heal:'❤️',score:'⭐'};
+  NV.powerups.push({x:x,y:y,type:type,icon:icons[type],t:0});
+}
+function applyPowerup(pw){
+  var p=NV.player;
+  if(pw.type==='shield'){p.invincible=4;showNovaPowerup('🛡️ Bouclier 4s !');}
+  else if(pw.type==='heal'){if(p.lives<p.maxLives){p.lives++;novaUpdateHUD();}showNovaPowerup('❤️ +1 Vie !');}
+  else if(pw.type==='bomb'){NV.bombs++;updateBombCount();showNovaPowerup('💣 +1 Bombe !');}
+  else if(pw.type==='score'){NV.score+=50+NV.wave*10;novaUpdateHUD();showNovaPowerup('⭐ +Bonus score !');}
+  else if(pw.type==='rapid'){NV.fireTimer=0;showNovaPowerup('⚡ Tir rapide !');}
+  else if(pw.type==='triple'){showNovaPowerup('🔱 Triple tir !');}
+}
+
+function useBomb(){
+  if(NV.bombs<=0)return;NV.bombs--;updateBombCount();
+  NV.enemies.forEach(function(e){if(e.alive){e.alive=false;NV.score+=10;spawnParticles(e.x,e.y,e.color,8);}});
+  if(NV.bossAlive&&NV.boss){NV.boss.hp-=80;document.getElementById('novaBossFill').style.width=Math.max(0,NV.boss.hp/NV.boss.maxHp*100)+'%';}
+  NV.enemyBullets=[];
+  spawnParticles(NV.canvas.width/2,NV.canvas.height/2,'#fbbf24',40);
+  showNovaPowerup('💥 BOMBE !');
+  novaUpdateHUD();
+}
+
+function hitPlayer(){
+  var p=NV.player;
+  p.lives--;p.invincible=2;
+  spawnParticles(p.x,p.y,'#fca5a5',10);
+  novaUpdateHUD();
+  if(p.lives<=0){endNova();}
+}
+
+function showNovaPowerup(msg){
+  var el=document.getElementById('novaPowerupText');el.textContent=msg;el.style.display='block';
+  setTimeout(function(){el.style.display='none';},1800);
+}
+function updateBombCount(){document.getElementById('novaBombCount').textContent=NV.bombs;}
+function novaUpdateHUD(){
+  document.getElementById('novaWave').textContent=NV.wave;
+  document.getElementById('novaScore').textContent=NV.score;
+  var hearts=document.getElementById('novaHearts');hearts.innerHTML='';
+  var p=NV.player;if(!p)return;
+  for(var i=0;i<p.maxLives;i++){var h=document.createElement('span');h.textContent=i<p.lives?'❤️':'🖤';h.style.fontSize='16px';hearts.appendChild(h);}
+  updateBombCount();
+}
+
+function endNova(){
+  NV.running=false;if(NV.raf){cancelAnimationFrame(NV.raf);NV.raf=null;}
+  window.removeEventListener('keydown',nvKeyD);window.removeEventListener('keyup',nvKeyU);
+  document.getElementById('novaJoyBase').style.display='none';
+  var earned=Math.floor(NV.score/5);NV.coins+=earned;
+  db.ref('users/'+CU.id+'/coins').set(NV.coins);syncNovaCoins();
+  var prevBest=(usersCache[CU.id]||{}).novaScore||0;
+  var newRecord=NV.score>prevBest;
+  if(newRecord)db.ref('users/'+CU.id+'/novaScore').set(NV.score);
+  document.getElementById('novaOverWave').textContent='Vague atteinte : '+NV.wave;
+  document.getElementById('novaOverScore').textContent='Score : '+NV.score;
+  document.getElementById('novaOverCoins').textContent='+'+earned+' crédits gagnés (total : '+NV.coins+' 💰)';
+  document.getElementById('novaOverRecord').textContent=newRecord?'🏆 Nouveau record personnel !':'';
+  document.getElementById('novaOverScreen').style.display='flex';
+}
+
+function leaveNova(){
+  NV.running=false;if(NV.raf){cancelAnimationFrame(NV.raf);NV.raf=null;}
+  window.removeEventListener('keydown',nvKeyD);window.removeEventListener('keyup',nvKeyU);
+  document.getElementById('novaJoyBase').style.display='none';
+  if(CU)db.ref('users/'+CU.id+'/coins').set(NV.coins);
+  backToHome();
+}
+
+function nvRender(){
+  var cv=NV.canvas,ctx=NV.ctx;if(!cv||!ctx)return;
+  cv.width=cv.offsetWidth;cv.height=cv.offsetHeight;
+  // Fond étoilé
+  ctx.fillStyle='#000010';ctx.fillRect(0,0,cv.width,cv.height);
+  if(!NV._stars||NV._stars.length<80){NV._stars=[];for(var i=0;i<80;i++)NV._stars.push({x:Math.random()*cv.width,y:Math.random()*cv.height,r:Math.random()*1.5,bright:Math.random()});}
+  NV._stars.forEach(function(s){
+    s.y+=0.3;if(s.y>cv.height)s.y=0;
+    ctx.fillStyle='rgba(255,255,255,'+s.bright+')';ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();
+  });
+  // Particules
+  NV.particles.forEach(function(pt){
+    ctx.save();ctx.globalAlpha=Math.max(0,pt.life/0.9);ctx.fillStyle=pt.color;
+    ctx.beginPath();ctx.arc(pt.x,pt.y,3,0,Math.PI*2);ctx.fill();ctx.restore();
+  });
+  // Power-ups
+  NV.powerups.forEach(function(pw){
+    ctx.save();ctx.globalAlpha=0.9+Math.sin(pw.t*4)*0.1;
+    ctx.shadowColor='#fbbf24';ctx.shadowBlur=12;
+    ctx.font='20px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(pw.icon,pw.x,pw.y);ctx.restore();
+  });
+  // Ennemis
+  NV.enemies.forEach(function(e){if(!e.alive)return;nvDrawEnemy(ctx,e);});
+  // Boss
+  if(NV.bossAlive&&NV.boss&&NV.boss.alive)nvDrawBoss(ctx,NV.boss);
+  // Balles ennemies
+  NV.enemyBullets.forEach(function(b){
+    ctx.shadowColor=b.color;ctx.shadowBlur=8;
+    ctx.fillStyle=b.color;ctx.beginPath();ctx.arc(b.x,b.y,5,0,Math.PI*2);ctx.fill();
+    ctx.shadowBlur=0;
+  });
+  // Trail joueur
+  var p=NV.player;if(!p)return;
+  p.trail.forEach(function(pt,i){
+    ctx.globalAlpha=(i/p.trail.length)*0.25;
+    ctx.fillStyle=p.ship.color;ctx.beginPath();ctx.arc(pt.x,pt.y,8*(i/p.trail.length),0,Math.PI*2);ctx.fill();
+  });
+  ctx.globalAlpha=1;
+  // Balles joueur
+  NV.bullets.forEach(function(b){
+    ctx.shadowColor=b.color;ctx.shadowBlur=10;
+    ctx.fillStyle=b.color;ctx.beginPath();
+    if(b.pierce){ctx.fillRect(b.x-2,b.y-12,4,24);}
+    else{ctx.arc(b.x,b.y,5,0,Math.PI*2);}
+    ctx.fill();ctx.shadowBlur=0;
+  });
+  // Joueur
+  if(p.invincible>0&&Math.floor(p.invincible*8)%2===0){ctx.globalAlpha=0.4;}
+  nvDrawPlayer(ctx,p);
+  ctx.globalAlpha=1;
+}
+
+function nvDrawPlayer(ctx,p){
+  var c=p.ship.color;
+  ctx.save();ctx.translate(p.x,p.y);
+  ctx.shadowColor=c;ctx.shadowBlur=20;
+  // Corps
+  ctx.fillStyle=c;ctx.beginPath();ctx.moveTo(0,-20);ctx.lineTo(-14,12);ctx.lineTo(-6,6);ctx.lineTo(0,10);ctx.lineTo(6,6);ctx.lineTo(14,12);ctx.closePath();ctx.fill();
+  // Cockpit
+  ctx.fillStyle='rgba(255,255,255,.5)';ctx.beginPath();ctx.ellipse(0,-8,5,8,0,0,Math.PI*2);ctx.fill();
+  // Réacteur
+  ctx.shadowColor='#fbbf24';
+  ctx.fillStyle='#fbbf24';ctx.beginPath();ctx.moveTo(-6,10);ctx.lineTo(0,10+10+Math.random()*6);ctx.lineTo(6,10);ctx.closePath();ctx.fill();
+  ctx.shadowBlur=0;ctx.restore();
+  // Bouclier visible
+  if(p.invincible>0){
+    ctx.strokeStyle='rgba(96,165,250,0.6)';ctx.lineWidth=3;ctx.setLineDash([6,4]);
+    ctx.beginPath();ctx.arc(p.x,p.y,28,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+  }
+}
+
+function nvDrawEnemy(ctx,e){
+  ctx.save();ctx.translate(e.x,e.y);
+  ctx.shadowColor=e.color;ctx.shadowBlur=14;
+  ctx.fillStyle=e.color;
+  if(e.type==='shooter'){
+    ctx.beginPath();ctx.moveTo(0,14);ctx.lineTo(-14,-12);ctx.lineTo(0,-6);ctx.lineTo(14,-12);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#fca5a5';ctx.beginPath();ctx.arc(0,-2,5,0,Math.PI*2);ctx.fill();
+  } else if(e.type==='zigzag'){
+    ctx.beginPath();ctx.moveTo(0,14);ctx.lineTo(-12,-10);ctx.lineTo(12,-10);ctx.closePath();ctx.fill();
+    ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
+  } else {
+    ctx.beginPath();ctx.moveTo(0,14);ctx.lineTo(-14,-8);ctx.lineTo(-6,-4);ctx.lineTo(0,-12);ctx.lineTo(6,-4);ctx.lineTo(14,-8);ctx.closePath();ctx.fill();
+  }
+  ctx.restore();
+  // Barre de vie si > 1 hp
+  if(e.maxHp>1){ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(e.x-15,e.y+16,30,4);ctx.fillStyle=e.color;ctx.fillRect(e.x-15,e.y+16,30*(e.hp/e.maxHp),4);}
+}
+
+function nvDrawBoss(ctx,b){
+  ctx.save();ctx.translate(b.x,b.y);
+  ctx.shadowColor='#f97316';ctx.shadowBlur=30;
+  ctx.fillStyle='#7c2d12';ctx.beginPath();ctx.moveTo(0,30);ctx.lineTo(-b.w/2,0);ctx.lineTo(-b.w/2+10,-b.h/2);ctx.lineTo(-20,-b.h/2);ctx.lineTo(0,-b.h/2-20);ctx.lineTo(20,-b.h/2);ctx.lineTo(b.w/2-10,-b.h/2);ctx.lineTo(b.w/2,0);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#f97316';ctx.beginPath();ctx.ellipse(0,-10,20,14,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(255,50,50,.8)';ctx.beginPath();ctx.arc(0,-10,8,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;ctx.restore();
+}
+
+/* ══ BOUTIQUE NOVA STRIKE ══ */
+function openNovaShop(){
+  NV.novaShopTab='ship';
+  document.getElementById('novaTabShip').classList.add('active');
+  document.getElementById('novaTabWeapon').classList.remove('active');
+  db.ref('users/'+CU.id+'/coins').once('value',function(s){NV.coins=s.exists()?s.val():0;syncNovaCoins();});
+  renderNovaShop();
+  openModal('novaShopModal');
+}
+function switchNovaShopTab(t){
+  NV.novaShopTab=t;
+  document.getElementById('novaTabShip').classList.toggle('active',t==='ship');
+  document.getElementById('novaTabWeapon').classList.toggle('active',t==='weapon');
+  renderNovaShop();
+}
+function renderNovaShop(){
+  var cont=document.getElementById('novaShopItems');cont.innerHTML='';syncNovaCoins();
+  var items=NV.novaShopTab==='ship'?NOVA_SHIPS:NOVA_WEAPONS;
+  var ownedKey=NV.novaShopTab==='ship'?'ownedShips':'ownedWeapons';
+  var activeKey=NV.novaShopTab==='ship'?'ship':'weapon';
+  items.forEach(function(item){
+    var isOwned=!!(NV[ownedKey]&&NV[ownedKey][item.id])||item.price===0;
+    var isActive=NV[activeKey]===item.id;
+    var row=document.createElement('div');
+    row.style.cssText='background:var(--s2);border:1px solid '+(isActive?'var(--accent)':'var(--border)')+';border-radius:12px;padding:12px;display:flex;align-items:center;gap:12px';
+    var prev=document.createElement('canvas');prev.width=44;prev.height=44;prev.style.cssText='flex-shrink:0;border-radius:8px;background:#000020';
+    var pctx=prev.getContext('2d');
+    if(NV.novaShopTab==='ship'){
+      pctx.save();pctx.translate(22,26);pctx.shadowColor=item.color;pctx.shadowBlur=10;
+      pctx.fillStyle=item.color;pctx.beginPath();pctx.moveTo(0,-14);pctx.lineTo(-10,8);pctx.lineTo(-4,4);pctx.lineTo(0,7);pctx.lineTo(4,4);pctx.lineTo(10,8);pctx.closePath();pctx.fill();pctx.restore();
+    } else {
+      pctx.font='22px serif';pctx.textAlign='center';pctx.textBaseline='middle';
+      pctx.fillText(item.id==='single'?'🔵':item.id==='double'?'🟣':item.id==='triple'?'🔱':item.id==='laser'?'🔷':'⭐',22,22);
+    }
+    var info=document.createElement('div');info.style.flex='1';
+    var desc=NV.novaShopTab==='ship'?('❤️ '+item.lives+' vies · vitesse '+item.speed+'x'):item.desc;
+    info.innerHTML='<div style="font-size:13px;font-weight:700">'+esc(item.name)+'</div>'
+      +'<div style="font-size:11px;color:var(--muted)">'+(isOwned?'Possédé · '+desc:'💰 '+item.price+' · '+desc)+'</div>';
+    var btn;
+    if(isActive){btn=cBtn('✓ Équipé','btn btn-ok',null);btn.disabled=true;}
+    else if(isOwned){btn=cBtn('Équiper','btn btn-ghost',function(){
+      NV[activeKey]=item.id;
+      db.ref('users/'+CU.id+'/nova'+(NV.novaShopTab==='ship'?'Ship':'Weapon')).set(item.id);
+      toast('Équipé !','ok');renderNovaShop();
+    });}
+    else{btn=cBtn('Acheter','btn btn-accent',function(){
+      if(NV.coins<item.price){toast('Pas assez de crédits !','err');return;}
+      NV.coins-=item.price;NV[ownedKey][item.id]=true;
+      db.ref('users/'+CU.id+'/coins').set(NV.coins);
+      db.ref('users/'+CU.id+'/nova'+ownedKey.charAt(0).toUpperCase()+ownedKey.slice(1)+'/'+item.id).set(true);
+      NV[activeKey]=item.id;
+      db.ref('users/'+CU.id+'/nova'+(NV.novaShopTab==='ship'?'Ship':'Weapon')).set(item.id);
+      syncNovaCoins();toast('Acheté et équipé !','ok');renderNovaShop();
+    });}
+    row.appendChild(prev);row.appendChild(info);row.appendChild(btn);cont.appendChild(row);
+  });
+}
 
 function toggleMob(){document.getElementById('sidebar').classList.toggle('mob-open')}
 function closeMob(){document.getElementById('sidebar').classList.remove('mob-open')}
