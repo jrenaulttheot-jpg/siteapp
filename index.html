@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+m<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -31,6 +31,7 @@ html,body{height:100%;overflow:hidden}
 body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh}
 .hide{display:none!important}
 .page{display:none;width:100%;height:100vh;flex-direction:column}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
 .cbtn{background:var(--s2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:20px;font-weight:700;padding:14px 8px;cursor:pointer;transition:all .15s;font-family:'Sora',sans-serif;touch-action:manipulation}
 .cbtn:active{transform:scale(.93);background:var(--s3)}
 .cbtn-fn{background:var(--s1);color:var(--muted);font-size:13px}
@@ -456,6 +457,213 @@ input:focus,textarea:focus{outline:none}
     </div>
     <div id="novaShopItems" style="max-height:55vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px"></div>
     <div class="modal-acts"><button class="btn btn-ghost" onclick="closeModal('novaShopModal')">Fermer</button></div>
+  </div>
+</div>
+
+<!-- CLOCK PAGE -->
+<div class="page" id="clockPage" style="flex-direction:column;background:var(--bg)">
+  <div class="home-top">
+    <button class="h-ibtn" onclick="leaveClock()">🏠</button>
+    <span style="flex:1;text-align:center;font-weight:800;font-size:15px">🕐 Horloge</span>
+    <button class="h-ibtn" id="clockAlarmBell" onclick="switchClockTab('alarm')" title="Alarmes">🔔</button>
+  </div>
+  <div class="admin-tabs" style="border-bottom:1px solid var(--border);flex-shrink:0">
+    <button class="atab active" id="clockTabClock" onclick="switchClockTab('clock')">🕐 Heure</button>
+    <button class="atab" id="clockTabTimer" onclick="switchClockTab('timer')">⏱️ Minuteur</button>
+    <button class="atab" id="clockTabStopwatch" onclick="switchClockTab('stopwatch')">🏁 Chrono</button>
+    <button class="atab" id="clockTabAlarm" onclick="switchClockTab('alarm')">🔔 Alarme</button>
+  </div>
+
+  <!-- HEURE -->
+  <div id="clockTabClock" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:20px">
+    <canvas id="analogClock" width="220" height="220"></canvas>
+    <div id="digitalClock" style="font-size:52px;font-weight:800;letter-spacing:2px;font-variant-numeric:tabular-nums"></div>
+    <div id="clockDate" style="font-size:15px;color:var(--muted)"></div>
+    <div id="clockSecond" style="font-size:13px;color:var(--muted)"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+      <div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:10px 16px;text-align:center">
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Fuseau</div>
+        <select id="clockTZ" onchange="updateClock()" style="background:none;border:none;color:var(--text);font-size:13px;font-weight:700;cursor:pointer">
+          <option value="local">Local</option>
+          <option value="America/New_York">New York</option>
+          <option value="America/Los_Angeles">Los Angeles</option>
+          <option value="Europe/London">Londres</option>
+          <option value="Europe/Paris">Paris</option>
+          <option value="Asia/Tokyo">Tokyo</option>
+          <option value="Asia/Dubai">Dubaï</option>
+          <option value="America/Sao_Paulo">São Paulo</option>
+        </select>
+      </div>
+      <div id="clockSunrise" style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:10px 16px;text-align:center;font-size:13px">
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">🌅 Lever / Coucher</div>
+        <div style="font-weight:700;margin-top:2px">06:00 / 20:30</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MINUTEUR -->
+  <div id="clockTabTimer" style="flex:1;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px">
+    <div id="timerDisplay" style="font-size:64px;font-weight:800;letter-spacing:3px;font-variant-numeric:tabular-nums">00:00:00</div>
+    <div id="timerProgress" style="width:240px;height:6px;background:var(--border);border-radius:3px;overflow:hidden"><div id="timerProgressFill" style="height:100%;background:var(--accent);border-radius:3px;transition:width .5s"></div></div>
+    <div style="display:flex;gap:10px">
+      <input type="number" id="timerH" min="0" max="23" value="0" placeholder="HH" style="width:60px;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:10px;color:var(--text);font-size:20px;text-align:center;font-weight:700">
+      <span style="font-size:28px;font-weight:800;align-self:center">:</span>
+      <input type="number" id="timerM" min="0" max="59" value="5" placeholder="MM" style="width:60px;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:10px;color:var(--text);font-size:20px;text-align:center;font-weight:700">
+      <span style="font-size:28px;font-weight:800;align-self:center">:</span>
+      <input type="number" id="timerS" min="0" max="59" value="0" placeholder="SS" style="width:60px;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:10px;color:var(--text);font-size:20px;text-align:center;font-weight:700">
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+      <button class="cbtn cbtn-fn" style="font-size:11px;padding:7px 12px" onclick="timerPreset(1,0,0)">1h</button>
+      <button class="cbtn cbtn-fn" style="font-size:11px;padding:7px 12px" onclick="timerPreset(0,30,0)">30min</button>
+      <button class="cbtn cbtn-fn" style="font-size:11px;padding:7px 12px" onclick="timerPreset(0,15,0)">15min</button>
+      <button class="cbtn cbtn-fn" style="font-size:11px;padding:7px 12px" onclick="timerPreset(0,10,0)">10min</button>
+      <button class="cbtn cbtn-fn" style="font-size:11px;padding:7px 12px" onclick="timerPreset(0,5,0)">5min</button>
+      <button class="cbtn cbtn-fn" style="font-size:11px;padding:7px 12px" onclick="timerPreset(0,1,0)">1min</button>
+      <button class="cbtn cbtn-fn" style="font-size:11px;padding:7px 12px" onclick="timerPreset(0,0,30)">30s</button>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span style="font-size:12px;color:var(--muted)">Son :</span>
+      <select id="timerSound" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-size:12px">
+        <option value="classic">🔔 Classique</option>
+        <option value="gentle">🎵 Doux</option>
+        <option value="urgent">🚨 Urgent</option>
+        <option value="bell">🔕 Cloche</option>
+        <option value="mario">⭐ Fanfare</option>
+      </select>
+      <button class="cbtn cbtn-fn" style="font-size:11px;padding:6px 10px" onclick="testSound(document.getElementById('timerSound').value)">▶ Test</button>
+    </div>
+    <div style="display:flex;gap:12px">
+      <button class="btn-main" id="timerStartBtn" style="min-width:130px" onclick="timerToggle()">▶ Démarrer</button>
+      <button class="cbtn cbtn-fn" style="padding:10px 18px" onclick="timerReset()">↺ Reset</button>
+    </div>
+  </div>
+
+  <!-- CHRONO -->
+  <div id="clockTabStopwatch" style="flex:1;display:none;flex-direction:column;align-items:center;gap:16px;padding:20px;overflow-y:auto">
+    <div id="swDisplay" style="font-size:56px;font-weight:800;letter-spacing:2px;font-variant-numeric:tabular-nums;margin-top:10px">00:00.00</div>
+    <div style="display:flex;gap:12px">
+      <button class="btn-main" id="swStartBtn" style="min-width:130px" onclick="swToggle()">▶ Démarrer</button>
+      <button class="cbtn cbtn-fn" style="padding:10px 18px" id="swLapBtn" onclick="swLap()" disabled>🏁 Tour</button>
+      <button class="cbtn cbtn-fn" style="padding:10px 18px" onclick="swReset()">↺ Reset</button>
+    </div>
+    <div id="swLaps" style="width:100%;max-width:400px;display:flex;flex-direction:column;gap:6px"></div>
+  </div>
+
+  <!-- ALARME -->
+  <div id="clockTabAlarm" style="flex:1;display:none;flex-direction:column;gap:12px;padding:16px;overflow-y:auto">
+    <div style="display:flex;gap:10px;align-items:center">
+      <input type="time" id="newAlarmTime" style="flex:1;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:10px;color:var(--text);font-size:18px;font-weight:700">
+      <input type="text" id="newAlarmLabel" placeholder="Libellé (optionnel)" style="flex:1;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:10px;color:var(--text);font-size:13px">
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span style="font-size:12px;color:var(--muted)">Son :</span>
+      <select id="newAlarmSound" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-size:12px">
+        <option value="classic">🔔 Classique</option>
+        <option value="gentle">🎵 Doux</option>
+        <option value="urgent">🚨 Urgent</option>
+        <option value="bell">🔕 Cloche</option>
+        <option value="mario">⭐ Fanfare</option>
+      </select>
+      <div style="display:flex;gap:4px;flex-wrap:wrap">
+        <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:3px"><input type="checkbox" class="alarmDay" value="1" checked style="accent-color:var(--accent)">Lu</label>
+        <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:3px"><input type="checkbox" class="alarmDay" value="2" checked style="accent-color:var(--accent)">Ma</label>
+        <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:3px"><input type="checkbox" class="alarmDay" value="3" checked style="accent-color:var(--accent)">Me</label>
+        <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:3px"><input type="checkbox" class="alarmDay" value="4" checked style="accent-color:var(--accent)">Je</label>
+        <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:3px"><input type="checkbox" class="alarmDay" value="5" checked style="accent-color:var(--accent)">Ve</label>
+        <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:3px"><input type="checkbox" class="alarmDay" value="6" style="accent-color:var(--accent)">Sa</label>
+        <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:3px"><input type="checkbox" class="alarmDay" value="0" style="accent-color:var(--accent)">Di</label>
+      </div>
+    </div>
+    <button class="btn btn-ok" onclick="addAlarm()">➕ Ajouter l'alarme</button>
+    <div id="alarmList" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+
+  <!-- Overlay alarme qui sonne -->
+  <div id="alarmRinging" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,.85);z-index:500;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;backdrop-filter:blur(8px)">
+    <div style="font-size:64px;animation:pulse 1s infinite">⏰</div>
+    <div style="font-size:24px;font-weight:800;color:#fcd34d" id="alarmRingingLabel">Alarme !</div>
+    <div style="font-size:48px;font-weight:800" id="alarmRingingTime">07:00</div>
+    <button class="btn-main" style="max-width:200px" onclick="stopAlarm()">🔕 Arrêter</button>
+    <button class="cbtn cbtn-fn" onclick="snoozeAlarm()">💤 Snooze 5 min</button>
+  </div>
+</div>
+
+<!-- NOTES PAGE -->
+<div class="page" id="notesPage" style="flex-direction:column;background:var(--bg)">
+  <div class="home-top">
+    <button class="h-ibtn" onclick="leaveNotes()">🏠</button>
+    <span id="notesBreadcrumb" style="flex:1;text-align:center;font-weight:800;font-size:14px">📝 Bloc-notes</span>
+    <button class="h-ibtn" id="notesAddBtn" onclick="notesAddAction()" title="Ajouter">➕</button>
+  </div>
+  <div style="flex:1;display:flex;overflow:hidden">
+    <!-- Sidebar notebooks -->
+    <div id="notesSidebar" style="width:200px;min-width:200px;background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden">
+      <div style="padding:10px;border-bottom:1px solid var(--border);font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px">📚 Cahiers</div>
+      <div id="notebookList" style="flex:1;overflow-y:auto;padding:6px"></div>
+      <div style="padding:8px;border-top:1px solid var(--border)">
+        <button class="btn btn-ghost" style="font-size:11px;padding:6px" onclick="createNotebook()">➕ Nouveau cahier</button>
+      </div>
+    </div>
+    <!-- Notes list + editor -->
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+      <!-- Liste des notes -->
+      <div id="notesListView" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+        <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+          <span id="notesListTitle" style="font-size:13px;font-weight:700;color:var(--muted)">Sélectionne un cahier</span>
+          <input type="text" id="notesSearch" placeholder="🔍 Rechercher…" oninput="filterNotes()" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;color:var(--text);font-size:12px;width:130px">
+        </div>
+        <div id="notesList" style="flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px">
+          <div style="color:var(--muted);font-size:13px;text-align:center;padding:30px">Sélectionne un cahier à gauche</div>
+        </div>
+      </div>
+      <!-- Éditeur de note -->
+      <div id="notesEditor" style="flex:1;display:none;flex-direction:column;overflow:hidden">
+        <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
+          <button class="cbtn cbtn-fn" style="padding:5px 10px;font-size:12px" onclick="closeNoteEditor()">← Retour</button>
+          <input type="text" id="noteTitleInput" placeholder="Titre de la note…" style="flex:1;background:none;border:none;color:var(--text);font-size:15px;font-weight:700;outline:none">
+          <button class="cbtn cbtn-fn" style="padding:5px 10px;font-size:12px" onclick="saveNote()">💾 Sauver</button>
+          <button class="cbtn cbtn-fn" style="padding:5px 10px;font-size:12px" onclick="openShareNote()">🔗 Partager</button>
+          <button class="cbtn cbtn-fn" style="padding:5px 10px;font-size:11px;color:#fca5a5" onclick="deleteNote()">🗑️</button>
+        </div>
+        <div style="padding:8px 14px;border-bottom:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap">
+          <button class="cbtn cbtn-fn" style="padding:4px 9px;font-size:12px;font-weight:800" onclick="noteFormat('bold')"><b>G</b></button>
+          <button class="cbtn cbtn-fn" style="padding:4px 9px;font-size:12px;font-style:italic" onclick="noteFormat('italic')"><i>I</i></button>
+          <button class="cbtn cbtn-fn" style="padding:4px 9px;font-size:12px;text-decoration:underline" onclick="noteFormat('underline')"><u>S</u></button>
+          <button class="cbtn cbtn-fn" style="padding:4px 9px;font-size:12px" onclick="noteFormat('insertUnorderedList')">• Liste</button>
+          <button class="cbtn cbtn-fn" style="padding:4px 9px;font-size:12px" onclick="noteFormat('insertOrderedList')">1. Liste</button>
+          <button class="cbtn cbtn-fn" style="padding:4px 9px;font-size:12px" onclick="noteFormat('formatBlock','H2')">Titre</button>
+          <button class="cbtn cbtn-fn" style="padding:4px 9px;font-size:11px" onclick="noteInsertDate()">📅 Date</button>
+          <select onchange="noteFormat('foreColor',this.value);this.selectedIndex=0" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:4px 6px;color:var(--text);font-size:11px">
+            <option value="">🎨 Couleur</option>
+            <option value="#ef4444" style="color:#ef4444">Rouge</option>
+            <option value="#22c55e" style="color:#22c55e">Vert</option>
+            <option value="#3b82f6" style="color:#3b82f6">Bleu</option>
+            <option value="#f59e0b" style="color:#f59e0b">Orange</option>
+            <option value="#a78bfa" style="color:#a78bfa">Violet</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;padding:4px 14px;border-bottom:1px solid var(--border);align-items:center;font-size:11px;color:var(--muted)">
+          <span id="noteSharedBadge" style="display:none;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:#4ade80;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700">🔗 PARTAGÉ</span>
+          <span id="noteSaveStatus" style="margin-left:auto">En cours…</span>
+          <span id="noteWordCount">0 mots</span>
+        </div>
+        <div id="noteContentEditor" contenteditable="true" style="flex:1;overflow-y:auto;padding:16px;font-size:14px;line-height:1.7;outline:none;color:var(--text)" oninput="onNoteInput()"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SHARE NOTE MODAL -->
+<div class="modal-ov" id="shareNoteModal">
+  <div class="modal" style="max-width:400px">
+    <h3>🔗 Partager la note</h3>
+    <p class="msub">Choisis les contacts avec qui partager. Ils pourront lire et modifier la note en temps réel.</p>
+    <div id="shareNoteContacts" style="max-height:50vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px"></div>
+    <div id="shareNoteCurrentList" style="margin-top:12px;font-size:12px;color:var(--muted)"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ok" onclick="confirmShareNote()">✅ Partager</button>
+      <button class="btn btn-ghost" onclick="closeModal('shareNoteModal')">Annuler</button>
+    </div>
   </div>
 </div>
 
@@ -2038,7 +2246,9 @@ var APPS=[
   {id:'game',name:'Battle Royale',icon:'🎮'},
   {id:'dash',name:'Bloc Dash',icon:'🔺'},
   {id:'calc',name:'Calculatrice',icon:'🧮'},
-  {id:'nova',name:'Nova Strike',icon:'🚀'}
+  {id:'nova',name:'Nova Strike',icon:'🚀'},
+  {id:'clock',name:'Horloge',icon:'🕐'},
+  {id:'notes',name:'Bloc-notes',icon:'📝'}
 ];
 
 function backToHome(){
@@ -2055,6 +2265,8 @@ function goToApp(id){
   else if(id==='dash'){goToDash();}
   else if(id==='calc'){showPage('calcPage');}
   else if(id==='nova'){goToNova();}
+  else if(id==='clock'){goToClock();}
+  else if(id==='notes'){goToNotes();}
 }
 
 function renderHome(){
@@ -4022,6 +4234,452 @@ function renderNovaShop(){
       syncNovaCoins();toast('Acheté et équipé !','ok');renderNovaShop();
     });}
     row.appendChild(prev);row.appendChild(info);row.appendChild(btn);cont.appendChild(row);
+  });
+}
+
+/* ══════════════════════════════
+   SONS (Web Audio API)
+══════════════════════════════ */
+var _audioCtx=null;
+function getACtx(){if(!_audioCtx)_audioCtx=new(window.AudioContext||window.webkitAudioContext)();return _audioCtx;}
+function playTone(freq,dur,type,vol,start){
+  var ctx=getACtx();var o=ctx.createOscillator();var g=ctx.createGain();
+  o.connect(g);g.connect(ctx.destination);
+  o.type=type||'sine';o.frequency.setValueAtTime(freq,ctx.currentTime+(start||0));
+  g.gain.setValueAtTime(vol||0.35,ctx.currentTime+(start||0));
+  g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+(start||0)+dur);
+  o.start(ctx.currentTime+(start||0));o.stop(ctx.currentTime+(start||0)+dur);
+}
+var _alarmInterval=null;
+function testSound(style){playSound(style,false);}
+function playSound(style,loop){
+  stopSoundLoop();
+  function doPlay(){
+    if(style==='classic'){for(var i=0;i<3;i++){playTone(880,.18,'square',.4,i*.38);playTone(880,.18,'square',.4,i*.38+.19);}}
+    else if(style==='gentle'){var n=[523,659,784,1047];n.forEach(function(f,i){playTone(f,.35,'sine',.28,i*.28);});}
+    else if(style==='urgent'){for(var i=0;i<8;i++){playTone(i%2===0?1100:880,.09,'square',.45,i*.12);}}
+    else if(style==='bell'){playTone(1318,.9,'sine',.4,0);playTone(1047,.7,'sine',.25,.25);playTone(784,.5,'sine',.15,.55);}
+    else if(style==='mario'){var m=[659,659,0,659,0,523,659,0,784,0,392];var t=0;m.forEach(function(f){if(f>0)playTone(f,.14,'square',.35,t);t+=.16;});}
+  }
+  doPlay();
+  if(loop)_alarmInterval=setInterval(doPlay,loop);
+}
+function stopSoundLoop(){if(_alarmInterval){clearInterval(_alarmInterval);_alarmInterval=null;}}
+
+/* ══════════════════════════════
+   HORLOGE
+══════════════════════════════ */
+var _clockInterval=null,_swInterval=null,_timerInterval=null,_alarmCheckInterval=null;
+var SW={running:false,elapsed:0,lastStart:0,laps:[]};
+var TM={running:false,total:0,remaining:0,lastStart:0};
+var alarms=[];
+var _ringAlarm=null,_snoozeTimeout=null;
+
+function goToClock(){
+  showPage('clockPage');
+  switchClockTab('clock');
+  loadAlarms();
+  if(!_alarmCheckInterval)_alarmCheckInterval=setInterval(checkAlarms,15000);
+}
+function leaveClock(){
+  if(_clockInterval){clearInterval(_clockInterval);_clockInterval=null;}
+  backToHome();
+}
+function switchClockTab(t){
+  ['clock','timer','stopwatch','alarm'].forEach(function(x){
+    var btn=document.getElementById('clockTab'+x.charAt(0).toUpperCase()+x.slice(1));
+    if(btn)btn.classList.toggle('active',x===t);
+    var panel=document.getElementById('clockTab'+x.charAt(0).toUpperCase()+x.slice(1));
+    if(panel)panel.style.display=x===t?'flex':'none';
+  });
+  if(t==='clock'){startClockTick();}
+  else{if(_clockInterval){clearInterval(_clockInterval);_clockInterval=null;}}
+}
+function startClockTick(){
+  updateClock();
+  if(_clockInterval)clearInterval(_clockInterval);
+  _clockInterval=setInterval(updateClock,1000);
+}
+function updateClock(){
+  var tz=document.getElementById('clockTZ').value;
+  var now=tz==='local'?new Date():new Date(new Date().toLocaleString('en-US',{timeZone:tz}));
+  var h=now.getHours(),m=now.getMinutes(),s=now.getSeconds();
+  var pad=function(n){return n<10?'0'+n:n;};
+  document.getElementById('digitalClock').textContent=pad(h)+':'+pad(m)+':'+pad(s);
+  var days=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  var months=['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
+  document.getElementById('clockDate').textContent=days[now.getDay()]+' '+now.getDate()+' '+months[now.getMonth()]+' '+now.getFullYear();
+  drawAnalog(now);
+}
+function drawAnalog(now){
+  var cv=document.getElementById('analogClock'),ctx=cv.getContext('2d');
+  var W=cv.width,cx=W/2,cy=W/2,r=cx-10;
+  ctx.clearRect(0,0,W,W);
+  // Fond
+  var grad=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
+  grad.addColorStop(0,'#1e1e30');grad.addColorStop(1,'#13131f');
+  ctx.fillStyle=grad;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+  // Cercle extérieur
+  ctx.strokeStyle='#6d28d9';ctx.lineWidth=3;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke();
+  // Graduations
+  for(var i=0;i<60;i++){
+    var a=i*Math.PI/30-Math.PI/2;
+    var isMaj=i%5===0;
+    ctx.strokeStyle=isMaj?'#e2e8f0':'rgba(255,255,255,.25)';
+    ctx.lineWidth=isMaj?2.5:1;
+    var r1=r-3,r2=r-(isMaj?14:8);
+    ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*r1,cy+Math.sin(a)*r1);ctx.lineTo(cx+Math.cos(a)*r2,cy+Math.sin(a)*r2);ctx.stroke();
+    if(isMaj){ctx.fillStyle='rgba(255,255,255,.7)';ctx.font='bold 10px Sora,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';var n=i/5||12;ctx.fillText(n,cx+Math.cos(a)*(r-26),cy+Math.sin(a)*(r-26));}
+  }
+  function hand(angle,length,width,color,shadow){
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(angle-Math.PI/2);
+    if(shadow){ctx.shadowColor=color;ctx.shadowBlur=8;}
+    ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(0,-length*.15);ctx.lineTo(0,length);ctx.stroke();
+    ctx.restore();
+  }
+  var h=now.getHours()%12,m=now.getMinutes(),s=now.getSeconds();
+  hand((h+m/60)*Math.PI/6,r*.52,5,'#e2e8f0',false);
+  hand((m+s/60)*Math.PI/30,r*.7,3.5,'#a78bfa',true);
+  hand(s*Math.PI/30,r*.8,1.5,'#f87171',true);
+  ctx.fillStyle='#6d28d9';ctx.beginPath();ctx.arc(cx,cy,6,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(cx,cy,2.5,0,Math.PI*2);ctx.fill();
+}
+
+/* ── MINUTEUR ── */
+function timerPreset(h,m,s){document.getElementById('timerH').value=h;document.getElementById('timerM').value=m;document.getElementById('timerS').value=s;timerReset();}
+function timerToggle(){
+  if(TM.running){
+    TM.running=false;TM.remaining-=(Date.now()-TM.lastStart)/1000;
+    clearInterval(_timerInterval);_timerInterval=null;
+    document.getElementById('timerStartBtn').textContent='▶ Reprendre';
+  } else {
+    var h=parseInt(document.getElementById('timerH').value)||0;
+    var m=parseInt(document.getElementById('timerM').value)||0;
+    var s=parseInt(document.getElementById('timerS').value)||0;
+    if(!TM.total){TM.total=h*3600+m*60+s;TM.remaining=TM.total;}
+    if(TM.remaining<=0)return;
+    TM.running=true;TM.lastStart=Date.now();
+    document.getElementById('timerStartBtn').textContent='⏸ Pause';
+    _timerInterval=setInterval(timerTick,100);
+  }
+}
+function timerTick(){
+  var elapsed=(Date.now()-TM.lastStart)/1000;
+  var rem=Math.max(0,TM.remaining-elapsed);
+  var h=Math.floor(rem/3600),m=Math.floor((rem%3600)/60),s=Math.floor(rem%60);
+  var pad=function(n){return n<10?'0'+n:n;};
+  document.getElementById('timerDisplay').textContent=pad(h)+':'+pad(m)+':'+pad(s);
+  document.getElementById('timerProgressFill').style.width=(TM.total>0?(1-rem/TM.total)*100:0)+'%';
+  if(rem<=0){
+    timerReset();
+    var sound=document.getElementById('timerSound').value;
+    playSound(sound,1500);
+    toast('⏰ Minuteur terminé !','ok');
+    setTimeout(stopSoundLoop,8000);
+  }
+}
+function timerReset(){
+  TM={running:false,total:0,remaining:0,lastStart:0};
+  if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}
+  var h=parseInt(document.getElementById('timerH').value)||0;
+  var m=parseInt(document.getElementById('timerM').value)||0;
+  var s=parseInt(document.getElementById('timerS').value)||0;
+  var pad=function(n){return n<10?'0'+n:n;};
+  document.getElementById('timerDisplay').textContent=pad(h)+':'+pad(m)+':'+pad(s);
+  document.getElementById('timerProgressFill').style.width='0%';
+  document.getElementById('timerStartBtn').textContent='▶ Démarrer';
+}
+
+/* ── CHRONO ── */
+function swToggle(){
+  if(SW.running){
+    SW.running=false;SW.elapsed+=(Date.now()-SW.lastStart);
+    clearInterval(_swInterval);_swInterval=null;
+    document.getElementById('swStartBtn').textContent='▶ Reprendre';
+    document.getElementById('swLapBtn').disabled=false;
+  } else {
+    SW.running=true;SW.lastStart=Date.now();
+    _swInterval=setInterval(swTick,10);
+    document.getElementById('swStartBtn').textContent='⏸ Pause';
+    document.getElementById('swLapBtn').disabled=false;
+  }
+}
+function swTick(){
+  var total=SW.elapsed+(Date.now()-SW.lastStart);
+  document.getElementById('swDisplay').textContent=fmtSW(total);
+}
+function fmtSW(ms){var m=Math.floor(ms/60000),s=Math.floor(ms%60000/1000),cs=Math.floor(ms%1000/10);return(m<10?'0':'')+m+':'+(s<10?'0':'')+s+'.'+(cs<10?'0':'')+cs;}
+function swLap(){
+  if(!SW.running&&SW.elapsed===0)return;
+  var total=SW.elapsed+(SW.running?Date.now()-SW.lastStart:0);
+  var lastLap=SW.laps.length>0?SW.laps[SW.laps.length-1].total:0;
+  SW.laps.push({total:total,split:total-lastLap});
+  renderLaps();
+}
+function renderLaps(){
+  var div=document.getElementById('swLaps');div.innerHTML='';
+  SW.laps.slice().reverse().forEach(function(l,i){
+    var idx=SW.laps.length-i;
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;justify-content:space-between;padding:7px 12px;background:var(--s2);border:1px solid var(--border);border-radius:10px;font-size:13px;font-variant-numeric:tabular-nums';
+    row.innerHTML='<span style="color:var(--muted)">Tour '+idx+'</span><span style="font-weight:700">'+fmtSW(l.split)+'</span><span style="color:var(--muted)">'+fmtSW(l.total)+'</span>';
+    div.appendChild(row);
+  });
+}
+function swReset(){SW={running:false,elapsed:0,lastStart:0,laps:[]};clearInterval(_swInterval);_swInterval=null;document.getElementById('swDisplay').textContent='00:00.00';document.getElementById('swStartBtn').textContent='▶ Démarrer';document.getElementById('swLapBtn').disabled=true;document.getElementById('swLaps').innerHTML='';}
+
+/* ── ALARMES ── */
+function loadAlarms(){alarms=JSON.parse(localStorage.getItem('siteapp_alarms')||'[]');renderAlarms();}
+function saveAlarms(){localStorage.setItem('siteapp_alarms',JSON.stringify(alarms));}
+function addAlarm(){
+  var time=document.getElementById('newAlarmTime').value;
+  if(!time){toast('Choisis une heure !','err');return;}
+  var days=[];document.querySelectorAll('.alarmDay:checked').forEach(function(cb){days.push(parseInt(cb.value));});
+  alarms.push({id:Date.now(),time:time,label:document.getElementById('newAlarmLabel').value||'Alarme',sound:document.getElementById('newAlarmSound').value,days:days,active:true});
+  saveAlarms();renderAlarms();toast('Alarme ajoutée ✅','ok');
+}
+function renderAlarms(){
+  var div=document.getElementById('alarmList');div.innerHTML='';
+  var dayNames=['Di','Lu','Ma','Me','Je','Ve','Sa'];
+  if(alarms.length===0){div.innerHTML='<p style="color:var(--muted);font-size:13px;text-align:center;padding:20px">Aucune alarme</p>';return;}
+  alarms.forEach(function(a,i){
+    var row=document.createElement('div');
+    row.style.cssText='background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px';
+    var daysStr=a.days.length===7?'Tous les jours':a.days.map(function(d){return dayNames[d];}).join(', ');
+    row.innerHTML='<div style="flex:1"><div style="font-size:26px;font-weight:800;font-variant-numeric:tabular-nums">'+a.time+'</div>'
+      +'<div style="font-size:12px;color:var(--muted)">'+esc(a.label)+' · '+daysStr+'</div></div>';
+    var tog=document.createElement('label');tog.style.cssText='position:relative;display:inline-block;width:44px;height:24px;cursor:pointer;flex-shrink:0';
+    var inp=document.createElement('input');inp.type='checkbox';inp.checked=a.active;inp.style.cssText='opacity:0;width:0;height:0';
+    inp.onchange=function(){alarms[i].active=this.checked;saveAlarms();};
+    var span=document.createElement('span');span.style.cssText='position:absolute;inset:0;background:'+(a.active?'#6d28d9':'var(--border)')+';border-radius:24px;transition:.3s';
+    var knob=document.createElement('span');knob.style.cssText='position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s'+(a.active?';transform:translateX(20px)':'');
+    span.appendChild(knob);tog.appendChild(inp);tog.appendChild(span);
+    var del=document.createElement('button');del.className='cbtn cbtn-fn';del.style.cssText='padding:5px 8px;font-size:11px;color:#fca5a5;flex-shrink:0';del.textContent='✕';
+    del.onclick=function(){alarms.splice(i,1);saveAlarms();renderAlarms();};
+    row.appendChild(tog);row.appendChild(del);div.appendChild(row);
+  });
+}
+function checkAlarms(){
+  var now=new Date();var h=now.getHours(),m=now.getMinutes(),day=now.getDay();
+  var pad=function(n){return n<10?'0'+n:n;};
+  var timeStr=pad(h)+':'+pad(m);
+  alarms.forEach(function(a){
+    if(!a.active)return;
+    if(a.time===timeStr&&a.days.indexOf(day)>-1&&!_ringAlarm){
+      _ringAlarm=a;triggerAlarm(a);
+    }
+  });
+}
+function triggerAlarm(a){
+  var pad=function(n){return n<10?'0'+n:n;};
+  document.getElementById('alarmRingingLabel').textContent=a.label;
+  document.getElementById('alarmRingingTime').textContent=a.time;
+  document.getElementById('alarmRinging').style.display='flex';
+  playSound(a.sound,2000);
+}
+function stopAlarm(){document.getElementById('alarmRinging').style.display='none';stopSoundLoop();_ringAlarm=null;}
+function snoozeAlarm(){
+  stopAlarm();
+  var a=_ringAlarm;_ringAlarm=null;
+  _snoozeTimeout=setTimeout(function(){if(a){_ringAlarm=a;triggerAlarm(a);}},5*60*1000);
+  toast('💤 Snooze 5 minutes','info');
+}
+
+/* ══════════════════════════════
+   BLOC-NOTES
+══════════════════════════════ */
+var _notesState={currentNotebook:null,currentNote:null,saveTimeout:null,sharedListener:null};
+
+function goToNotes(){showPage('notesPage');loadNotebooks();}
+function leaveNotes(){if(_notesState.sharedListener){_notesState.sharedListener.off();_notesState.sharedListener=null;}backToHome();}
+
+function notesAddAction(){
+  if(_notesState.currentNotebook)createNote();
+  else createNotebook();
+}
+
+function createNotebook(){
+  var name=prompt('Nom du cahier :');if(!name)return;
+  var id=db.ref('userNotes/'+CU.id+'/notebooks').push().key;
+  db.ref('userNotes/'+CU.id+'/notebooks/'+id).set({name:name,createdAt:Date.now()}).then(function(){loadNotebooks();});
+}
+function loadNotebooks(){
+  db.ref('userNotes/'+CU.id+'/notebooks').once('value',function(s){
+    var div=document.getElementById('notebookList');div.innerHTML='';
+    if(!s.exists()){div.innerHTML='<p style="color:var(--muted);font-size:11px;padding:8px">Aucun cahier</p>';return;}
+    var nbs=s.val();
+    Object.keys(nbs).forEach(function(id){
+      var nb=nbs[id];
+      var row=document.createElement('div');
+      var sel=_notesState.currentNotebook===id;
+      row.style.cssText='padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;background:'+(sel?'rgba(109,40,217,.2)':'none')+';color:'+(sel?'var(--acc2)':'var(--text)')+';display:flex;justify-content:space-between;align-items:center;margin-bottom:2px';
+      row.textContent='📓 '+nb.name;
+      row.onclick=function(){selectNotebook(id,nb.name);};
+      var del=document.createElement('button');del.textContent='✕';del.style.cssText='background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:2px 5px;flex-shrink:0';
+      del.onclick=function(e){e.stopPropagation();if(confirm('Supprimer "'+nb.name+'" et toutes ses notes ?'))deleteNotebook(id);};
+      row.appendChild(del);div.appendChild(row);
+    });
+  });
+}
+function deleteNotebook(id){
+  db.ref('userNotes/'+CU.id+'/notebooks/'+id).remove();
+  db.ref('userNotes/'+CU.id+'/notes').orderByChild('notebook').equalTo(id).once('value',function(s){
+    if(s.exists())Object.keys(s.val()).forEach(function(nid){db.ref('userNotes/'+CU.id+'/notes/'+nid).remove();});
+  });
+  if(_notesState.currentNotebook===id){_notesState.currentNotebook=null;document.getElementById('notesList').innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:30px">Sélectionne un cahier</div>';}
+  loadNotebooks();
+}
+function selectNotebook(id,name){
+  _notesState.currentNotebook=id;
+  document.getElementById('notesListTitle').textContent='📓 '+name;
+  closeNoteEditor();
+  loadNotebooks();
+  loadNotesList();
+}
+function loadNotesList(){
+  db.ref('userNotes/'+CU.id+'/notes').orderByChild('notebook').equalTo(_notesState.currentNotebook).once('value',function(s){
+    renderNotesList(s.exists()?s.val():{});
+  });
+}
+function renderNotesList(notes){
+  var div=document.getElementById('notesList');div.innerHTML='';
+  var search=(document.getElementById('notesSearch').value||'').toLowerCase();
+  var keys=Object.keys(notes).filter(function(k){
+    var n=notes[k];return !search||(n.title||'').toLowerCase().includes(search)||(n.content||'').toLowerCase().includes(search);
+  }).sort(function(a,b){return(notes[b].updatedAt||0)-(notes[a].updatedAt||0);});
+  if(keys.length===0){div.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:30px">Aucune note — clique sur ➕ pour créer</div>';return;}
+  keys.forEach(function(id){
+    var n=notes[id];
+    var row=document.createElement('div');
+    row.style.cssText='background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;cursor:pointer;transition:all .15s';
+    var excerpt=((n.content||'').replace(/<[^>]+>/g,'')).slice(0,80);
+    var date=n.updatedAt?new Date(n.updatedAt).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+    row.innerHTML='<div style="font-size:13px;font-weight:700;margin-bottom:3px">'+(n.isShared?'🔗 ':'')+esc(n.title||'Sans titre')+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(excerpt)+'</div>'
+      +'<div style="font-size:10px;color:var(--muted);margin-top:4px">'+date+'</div>';
+    row.onclick=function(){openNote(id);};
+    div.appendChild(row);
+  });
+}
+function filterNotes(){if(_notesState.currentNotebook)loadNotesList();}
+function createNote(){
+  var id=db.ref('userNotes/'+CU.id+'/notes').push().key;
+  var note={title:'Nouvelle note',content:'',notebook:_notesState.currentNotebook,createdAt:Date.now(),updatedAt:Date.now(),isShared:false,sharedWith:{}};
+  db.ref('userNotes/'+CU.id+'/notes/'+id).set(note).then(function(){openNote(id);loadNotesList();});
+}
+function openNote(id){
+  if(_notesState.sharedListener){_notesState.sharedListener.off();_notesState.sharedListener=null;}
+  _notesState.currentNote=id;
+  document.getElementById('notesListView').style.display='none';
+  document.getElementById('notesEditor').style.display='flex';
+  db.ref('userNotes/'+CU.id+'/notes/'+id).once('value',function(s){
+    if(!s.exists())return;
+    var n=s.val();
+    document.getElementById('noteTitleInput').value=n.title||'';
+    document.getElementById('noteContentEditor').innerHTML=n.content||'';
+    document.getElementById('noteSharedBadge').style.display=n.isShared?'inline':'none';
+    updateNoteStats();
+    if(n.isShared&&n.sharedNoteId){
+      _notesState.sharedListener=db.ref('sharedNotes/'+n.sharedNoteId+'/content');
+      _notesState.sharedListener.on('value',function(sv){
+        if(sv.exists()&&sv.val()!==document.getElementById('noteContentEditor').innerHTML){
+          var sel=window.getSelection(),range=sel.rangeCount?sel.getRangeAt(0):null;
+          document.getElementById('noteContentEditor').innerHTML=sv.val();
+          if(range){try{sel.removeAllRanges();sel.addRange(range);}catch(e){}}
+          updateNoteStats();
+        }
+      });
+    }
+  });
+}
+function closeNoteEditor(){
+  if(_notesState.sharedListener){_notesState.sharedListener.off();_notesState.sharedListener=null;}
+  _notesState.currentNote=null;
+  document.getElementById('notesEditor').style.display='none';
+  document.getElementById('notesListView').style.display='flex';
+  if(_notesState.currentNotebook)loadNotesList();
+}
+function onNoteInput(){
+  updateNoteStats();
+  clearTimeout(_notesState.saveTimeout);
+  _notesState.saveTimeout=setTimeout(function(){autoSaveNote();},800);
+  document.getElementById('noteSaveStatus').textContent='Non sauvegardé…';
+}
+function autoSaveNote(){
+  if(!_notesState.currentNote)return;
+  var id=_notesState.currentNote;
+  var content=document.getElementById('noteContentEditor').innerHTML;
+  var title=document.getElementById('noteTitleInput').value||'Sans titre';
+  db.ref('userNotes/'+CU.id+'/notes/'+id).update({content:content,title:title,updatedAt:Date.now()});
+  db.ref('userNotes/'+CU.id+'/notes/'+id+'/sharedNoteId').once('value',function(s){
+    if(s.exists())db.ref('sharedNotes/'+s.val()+'/content').set(content);
+  });
+  document.getElementById('noteSaveStatus').textContent='Sauvegardé ✓';
+}
+function saveNote(){autoSaveNote();toast('Note sauvegardée ✅','ok');}
+function deleteNote(){
+  if(!_notesState.currentNote)return;
+  if(!confirm('Supprimer cette note ?'))return;
+  var id=_notesState.currentNote;
+  db.ref('userNotes/'+CU.id+'/notes/'+id+'/sharedNoteId').once('value',function(s){
+    if(s.exists())db.ref('sharedNotes/'+s.val()).remove();
+  });
+  db.ref('userNotes/'+CU.id+'/notes/'+id).remove();
+  closeNoteEditor();
+}
+function updateNoteStats(){
+  var text=document.getElementById('noteContentEditor').textContent||'';
+  var words=text.trim()?text.trim().split(/\s+/).length:0;
+  document.getElementById('noteWordCount').textContent=words+' mot'+(words>1?'s':'');
+}
+function noteFormat(cmd,val){document.getElementById('noteContentEditor').focus();document.execCommand(cmd,false,val||null);onNoteInput();}
+function noteInsertDate(){var d=new Date().toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});document.execCommand('insertText',false,'📅 '+d+'\n');}
+
+/* ── PARTAGE DE NOTES ── */
+function openShareNote(){
+  if(!_notesState.currentNote)return;
+  var cont=document.getElementById('shareNoteContacts');cont.innerHTML='<p style="color:var(--muted);font-size:13px">Chargement…</p>';
+  db.ref('friendships/'+CU.id).once('value',function(s){
+    cont.innerHTML='';
+    if(!s.exists()||Object.keys(s.val()).length===0){cont.innerHTML='<p style="color:var(--muted);font-size:13px">Aucun ami à sélectionner</p>';openModal('shareNoteModal');return;}
+    var fr=s.val();
+    Object.keys(fr).forEach(function(fid){
+      if(!fr[fid])return;
+      var row=document.createElement('label');row.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--s2);border:1px solid var(--border);border-radius:10px;cursor:pointer';
+      var cb=document.createElement('input');cb.type='checkbox';cb.value=fid;cb.style.cssText='accent-color:var(--accent);width:16px;height:16px';
+      var av=document.createElement('div');av.className='ava';av.style.cssText='width:30px;height:30px;font-size:11px;flex-shrink:0';
+      var u=usersCache[fid]||{id:fid};setAva(av,null,fid,u.avatar,u.role==='admin');
+      var nm=document.createElement('span');nm.style.cssText='font-size:13px;font-weight:600';nm.textContent=fid;
+      row.appendChild(cb);row.appendChild(av);row.appendChild(nm);cont.appendChild(row);
+    });
+    db.ref('userNotes/'+CU.id+'/notes/'+_notesState.currentNote+'/sharedWith').once('value',function(sw){
+      var already=sw.exists()?sw.val():{};
+      var keys=Object.keys(already).filter(function(k){return already[k];});
+      document.getElementById('shareNoteCurrentList').textContent=keys.length?('Déjà partagé avec : '+keys.join(', ')):'';
+      cont.querySelectorAll('input[type=checkbox]').forEach(function(cb){if(already[cb.value])cb.checked=true;});
+    });
+    openModal('shareNoteModal');
+  });
+}
+function confirmShareNote(){
+  if(!_notesState.currentNote)return;
+  var selected=[];document.querySelectorAll('#shareNoteContacts input:checked').forEach(function(cb){selected.push(cb.value);});
+  var noteId=_notesState.currentNote;
+  db.ref('userNotes/'+CU.id+'/notes/'+noteId).once('value',function(s){
+    if(!s.exists())return;
+    var note=s.val();
+    var sharedNoteId=note.sharedNoteId||db.ref('sharedNotes').push().key;
+    var sharedWith={};selected.forEach(function(uid){sharedWith[uid]=true;});
+    db.ref('sharedNotes/'+sharedNoteId).set({title:note.title||'Sans titre',content:note.content||'',owner:CU.id,sharedWith:sharedWith,updatedAt:Date.now()});
+    db.ref('userNotes/'+CU.id+'/notes/'+noteId).update({isShared:selected.length>0,sharedNoteId:sharedNoteId,sharedWith:sharedWith});
+    selected.forEach(function(uid){
+      db.ref('userNotes/'+uid+'/sharedWithMe/'+sharedNoteId).set({title:note.title||'Sans titre',owner:CU.id,sharedNoteId:sharedNoteId,updatedAt:Date.now()});
+      pushNotif(uid,'note_shared',{from:CU.id,text:CU.id+' a partagé une note avec toi : "'+esc(note.title||'Sans titre')+'"'});
+    });
+    document.getElementById('noteSharedBadge').style.display=selected.length>0?'inline':'none';
+    closeModal('shareNoteModal');
+    toast(selected.length>0?'Note partagée avec '+selected.length+' contact(s) ✅':'Partage retiré','ok');
   });
 }
 
