@@ -475,7 +475,7 @@ input:focus,textarea:focus{outline:none}
   </div>
 
   <!-- HEURE -->
-  <div id="clockTabClock" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:20px">
+  <div id="clockPanelClock" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:20px">
     <canvas id="analogClock" width="220" height="220"></canvas>
     <div id="digitalClock" style="font-size:52px;font-weight:800;letter-spacing:2px;font-variant-numeric:tabular-nums"></div>
     <div id="clockDate" style="font-size:15px;color:var(--muted)"></div>
@@ -502,7 +502,7 @@ input:focus,textarea:focus{outline:none}
   </div>
 
   <!-- MINUTEUR -->
-  <div id="clockTabTimer" style="flex:1;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px">
+  <div id="clockPanelTimer" style="flex:1;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px">
     <div id="timerDisplay" style="font-size:64px;font-weight:800;letter-spacing:3px;font-variant-numeric:tabular-nums">00:00:00</div>
     <div id="timerProgress" style="width:240px;height:6px;background:var(--border);border-radius:3px;overflow:hidden"><div id="timerProgressFill" style="height:100%;background:var(--accent);border-radius:3px;transition:width .5s"></div></div>
     <div style="display:flex;gap:10px">
@@ -539,7 +539,7 @@ input:focus,textarea:focus{outline:none}
   </div>
 
   <!-- CHRONO -->
-  <div id="clockTabStopwatch" style="flex:1;display:none;flex-direction:column;align-items:center;gap:16px;padding:20px;overflow-y:auto">
+  <div id="clockPanelStopwatch" style="flex:1;display:none;flex-direction:column;align-items:center;gap:16px;padding:20px;overflow-y:auto">
     <div id="swDisplay" style="font-size:56px;font-weight:800;letter-spacing:2px;font-variant-numeric:tabular-nums;margin-top:10px">00:00.00</div>
     <div style="display:flex;gap:12px">
       <button class="btn-main" id="swStartBtn" style="min-width:130px" onclick="swToggle()">▶ Démarrer</button>
@@ -550,7 +550,7 @@ input:focus,textarea:focus{outline:none}
   </div>
 
   <!-- ALARME -->
-  <div id="clockTabAlarm" style="flex:1;display:none;flex-direction:column;gap:12px;padding:16px;overflow-y:auto">
+  <div id="clockPanelAlarm" style="flex:1;display:none;flex-direction:column;gap:12px;padding:16px;overflow-y:auto">
     <div style="display:flex;gap:10px;align-items:center">
       <input type="time" id="newAlarmTime" style="flex:1;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:10px;color:var(--text);font-size:18px;font-weight:700">
       <input type="text" id="newAlarmLabel" placeholder="Libellé (optionnel)" style="flex:1;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:10px;color:var(--text);font-size:13px">
@@ -621,11 +621,15 @@ input:focus,textarea:focus{outline:none}
         <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
           <button class="cbtn cbtn-fn" style="padding:5px 10px;font-size:12px" onclick="closeNoteEditor()">← Retour</button>
           <input type="text" id="noteTitleInput" placeholder="Titre de la note…" style="flex:1;background:none;border:none;color:var(--text);font-size:15px;font-weight:700;outline:none">
-          <button class="cbtn cbtn-fn" style="padding:5px 10px;font-size:12px" onclick="saveNote()">💾 Sauver</button>
-          <button class="cbtn cbtn-fn" style="padding:5px 10px;font-size:12px" onclick="openShareNote()">🔗 Partager</button>
+          <button class="btn btn-ok" style="padding:6px 12px;font-size:12px" onclick="saveNote()">💾 Sauver</button>
           <button class="cbtn cbtn-fn" style="padding:5px 10px;font-size:11px;color:#fca5a5" onclick="deleteNote()">🗑️</button>
         </div>
-        <div style="padding:8px 14px;border-bottom:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap">
+        <div style="padding:8px 14px;border-bottom:1px solid var(--border);background:var(--s1);display:flex;align-items:center;gap:8px">
+          <button class="btn btn-accent" style="padding:6px 14px;font-size:12px;font-weight:700" onclick="openShareNote()">🔗 Partager la note</button>
+          <span id="noteSharedBadge" style="display:none;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:#4ade80;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700">✅ PARTAGÉ EN DIRECT</span>
+          <span id="noteSaveStatus" style="margin-left:auto;font-size:11px;color:var(--muted)">–</span>
+          <span id="noteWordCount" style="font-size:11px;color:var(--muted)">0 mots</span>
+        </div>
           <button class="cbtn cbtn-fn" style="padding:4px 9px;font-size:12px;font-weight:800" onclick="noteFormat('bold')"><b>G</b></button>
           <button class="cbtn cbtn-fn" style="padding:4px 9px;font-size:12px;font-style:italic" onclick="noteFormat('italic')"><i>I</i></button>
           <button class="cbtn cbtn-fn" style="padding:4px 9px;font-size:12px;text-decoration:underline" onclick="noteFormat('underline')"><u>S</u></button>
@@ -4286,10 +4290,11 @@ function leaveClock(){
   backToHome();
 }
 function switchClockTab(t){
-  ['clock','timer','stopwatch','alarm'].forEach(function(x){
-    var btn=document.getElementById('clockTab'+x.charAt(0).toUpperCase()+x.slice(1));
+  var tabs={clock:'Clock',timer:'Timer',stopwatch:'Stopwatch',alarm:'Alarm'};
+  Object.keys(tabs).forEach(function(x){
+    var btn=document.getElementById('clockTab'+tabs[x]);
     if(btn)btn.classList.toggle('active',x===t);
-    var panel=document.getElementById('clockTab'+x.charAt(0).toUpperCase()+x.slice(1));
+    var panel=document.getElementById('clockPanel'+tabs[x]);
     if(panel)panel.style.display=x===t?'flex':'none';
   });
   if(t==='clock'){startClockTick();}
@@ -4682,6 +4687,119 @@ function confirmShareNote(){
     toast(selected.length>0?'Note partagée avec '+selected.length+' contact(s) ✅':'Partage retiré','ok');
   });
 }
+
+/* ══════════════════════════════
+   SWIPE GESTURES
+══════════════════════════════ */
+(function(){
+  var sx=0,sy=0,st=0,sEl=null;
+  var MIN_DIST=55,MAX_TIME=420,EDGE_ZONE=50;
+
+  // Indicateur visuel de swipe
+  var swipeHint=document.createElement('div');
+  swipeHint.style.cssText='position:fixed;top:50%;transform:translateY(-50%);width:4px;background:rgba(139,92,246,.5);border-radius:2px;transition:opacity .3s;opacity:0;pointer-events:none;z-index:9998;height:80px';
+  document.body.appendChild(swipeHint);
+  function showSwipeHint(side){
+    swipeHint.style.left=side==='left'?'0':'auto';
+    swipeHint.style.right=side==='right'?'0':'auto';
+    swipeHint.style.opacity='1';
+    setTimeout(function(){swipeHint.style.opacity='0';},300);
+  }
+
+  document.addEventListener('touchstart',function(e){
+    var t=e.touches[0];
+    sx=t.clientX;sy=t.clientY;st=Date.now();sEl=e.target;
+  },{passive:true});
+
+  document.addEventListener('touchend',function(e){
+    if(!e.changedTouches.length)return;
+    var t=e.changedTouches[0];
+    var dx=t.clientX-sx,dy=t.clientY-sy,dt=Date.now()-st;
+    if(dt>MAX_TIME)return;
+    var adx=Math.abs(dx),ady=Math.abs(dy);
+    var isH=adx>ady&&adx>MIN_DIST;
+    var isV=ady>adx&&ady>MIN_DIST;
+    if(!isH&&!isV)return;
+
+    var activePage=document.querySelector('.page.active');
+    var pid=activePage?activePage.id:'';
+
+    if(isH){
+      // ── Swipe horizontal ──
+      if(dx>0){
+        // → droite : retour accueil depuis n'importe quelle app (bord gauche ou général)
+        if(sx<EDGE_ZONE*2||['gamePage','dashPage','novaPage','calcPage','clockPage','notesPage'].indexOf(pid)>-1){
+          if(pid!=='homePage'&&pid!=='authPage'){
+            showSwipeHint('left');
+            // Arrêter les jeux si actifs
+            if(pid==='gamePage'&&typeof G!=='undefined'&&G.running){/* laisser le joystick gérer */return;}
+            if(pid==='dashPage'&&typeof D!=='undefined'&&D.running)return;
+            if(pid==='novaPage'&&typeof NV!=='undefined'&&NV.running)return;
+            backToHome();return;
+          }
+        }
+        // Dans l'horloge : onglet précédent
+        if(pid==='clockPage'){swipeClockTab(-1);return;}
+        // Dans la calc : onglet précédent
+        if(pid==='calcPage'){swipeCalcTab(-1);return;}
+        // Dans notes : fermer l'éditeur
+        if(pid==='notesPage'&&document.getElementById('notesEditor').style.display!=='none'){closeNoteEditor();return;}
+      } else {
+        // ← gauche
+        if(pid==='clockPage'){swipeClockTab(1);return;}
+        if(pid==='calcPage'){swipeCalcTab(1);return;}
+        if(pid==='homePage'){
+          showSwipeHint('right');
+          // Ouvrir la dernière app utilisée (ou ChatRoom)
+          goToApp('chat');return;
+        }
+      }
+    }
+
+    if(isV){
+      // ── Swipe vertical ──
+      if(dy<0){
+        // ↑ vers le haut
+        if(pid==='homePage'){
+          // Scroll vers les apps (rien de spécial, le scroll CSS gère)
+        }
+        if(pid==='notesPage'&&document.getElementById('notesListView').style.display!=='none'&&_notesState.currentNotebook){
+          createNote();return;
+        }
+      } else {
+        // ↓ vers le bas : fermer les panels ouverts
+        if(document.querySelector('.modal-ov.open')){
+          var open=document.querySelector('.modal-ov.open');
+          open.classList.remove('open');return;
+        }
+        if(document.querySelector('.panel-overlay.open')){
+          var panel=document.querySelector('.panel-overlay.open');
+          panel.classList.remove('open');return;
+        }
+      }
+    }
+  },{passive:true});
+
+  // Swipe onglets horloge
+  var clockTabs=['clock','timer','stopwatch','alarm'];
+  function swipeClockTab(dir){
+    var cur=clockTabs.findIndex(function(t){var p=document.getElementById('clockPanel'+t.charAt(0).toUpperCase()+t.slice(1));return p&&p.style.display!=='none';});
+    if(cur===-1)cur=0;
+    var next=(cur+dir+clockTabs.length)%clockTabs.length;
+    switchClockTab(clockTabs[next]);
+    showSwipeHint(dir>0?'right':'left');
+  }
+
+  // Swipe onglets calc
+  var calcTabsList=['std','sci','conv'];
+  function swipeCalcTab(dir){
+    var cur=calcTabsList.findIndex(function(t){return document.getElementById('calc'+t.charAt(0).toUpperCase()+t.slice(1)).style.display!=='none';});
+    if(cur===-1)cur=0;
+    var next=(cur+dir+calcTabsList.length)%calcTabsList.length;
+    switchCalcTab(calcTabsList[next]);
+    showSwipeHint(dir>0?'right':'left');
+  }
+})();
 
 function toggleMob(){document.getElementById('sidebar').classList.toggle('mob-open')}
 function closeMob(){document.getElementById('sidebar').classList.remove('mob-open')}
