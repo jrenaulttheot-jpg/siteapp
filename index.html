@@ -4690,114 +4690,98 @@ function confirmShareNote(){
 
 /* ══════════════════════════════
    SWIPE GESTURES
+   - Scroll vertical 1 doigt = jamais bloqué
+   - Navigation = swipe horizontal clairement marqué
+   - Jeux = swipe désactivé (touch géré par le canvas)
 ══════════════════════════════ */
 (function(){
-  var sx=0,sy=0,st=0,sEl=null;
-  var MIN_DIST=55,MAX_TIME=420,EDGE_ZONE=50;
+  var sx=0,sy=0,st=0;
+  var GAME_PAGES=['gamePage','dashPage','novaPage'];
 
-  // Indicateur visuel de swipe
-  var swipeHint=document.createElement('div');
-  swipeHint.style.cssText='position:fixed;top:50%;transform:translateY(-50%);width:4px;background:rgba(139,92,246,.5);border-radius:2px;transition:opacity .3s;opacity:0;pointer-events:none;z-index:9998;height:80px';
-  document.body.appendChild(swipeHint);
-  function showSwipeHint(side){
-    swipeHint.style.left=side==='left'?'0':'auto';
-    swipeHint.style.right=side==='right'?'0':'auto';
-    swipeHint.style.opacity='1';
-    setTimeout(function(){swipeHint.style.opacity='0';},300);
-  }
+  /* Indicateur visuel subtil */
+  var hint=document.createElement('div');
+  hint.style.cssText='position:fixed;top:50%;left:0;transform:translateY(-50%);width:3px;height:60px;background:rgba(139,92,246,.6);border-radius:0 3px 3px 0;transition:opacity .25s;opacity:0;pointer-events:none;z-index:9998';
+  document.body.appendChild(hint);
+  function showHint(){hint.style.opacity='1';setTimeout(function(){hint.style.opacity='0';},250);}
 
   document.addEventListener('touchstart',function(e){
+    // Ne rien faire sur les jeux (leur canvas gère le touch)
+    var page=document.querySelector('.page.active');
+    if(page&&GAME_PAGES.indexOf(page.id)>-1)return;
     var t=e.touches[0];
-    sx=t.clientX;sy=t.clientY;st=Date.now();sEl=e.target;
+    sx=t.clientX;sy=t.clientY;st=Date.now();
   },{passive:true});
 
   document.addEventListener('touchend',function(e){
-    if(!e.changedTouches.length)return;
+    if(!sx&&!sy)return;
+    var page=document.querySelector('.page.active');
+    if(!page)return;
+    var pid=page.id;
+    // Jamais sur les jeux
+    if(GAME_PAGES.indexOf(pid)>-1)return;
+
     var t=e.changedTouches[0];
-    var dx=t.clientX-sx,dy=t.clientY-sy,dt=Date.now()-st;
-    if(dt>MAX_TIME)return;
-    var adx=Math.abs(dx),ady=Math.abs(dy);
-    var isH=adx>ady&&adx>MIN_DIST;
-    var isV=ady>adx&&ady>MIN_DIST;
-    if(!isH&&!isV)return;
+    var dx=t.clientX-sx, dy=t.clientY-sy;
+    var adx=Math.abs(dx), ady=Math.abs(dy);
+    var dt=Date.now()-st;
+    sx=0;sy=0;
 
-    var activePage=document.querySelector('.page.active');
-    var pid=activePage?activePage.id:'';
+    // ── Conditions strictes pour éviter de perturber le scroll ──
+    // 1. Geste pas trop long (pas un scroll lent)
+    if(dt>400)return;
+    // 2. Doit être CLAIREMENT horizontal (rapport 2.5:1 minimum)
+    if(adx<ady*2.5)return;
+    // 3. Distance minimale
+    if(adx<55)return;
 
-    if(isH){
-      // ── Swipe horizontal ──
-      if(dx>0){
-        // → droite : retour accueil depuis n'importe quelle app (bord gauche ou général)
-        if(sx<EDGE_ZONE*2||['gamePage','dashPage','novaPage','calcPage','clockPage','notesPage'].indexOf(pid)>-1){
-          if(pid!=='homePage'&&pid!=='authPage'){
-            showSwipeHint('left');
-            // Arrêter les jeux si actifs
-            if(pid==='gamePage'&&typeof G!=='undefined'&&G.running){/* laisser le joystick gérer */return;}
-            if(pid==='dashPage'&&typeof D!=='undefined'&&D.running)return;
-            if(pid==='novaPage'&&typeof NV!=='undefined'&&NV.running)return;
-            backToHome();return;
-          }
+    if(dx>0){
+      // ── Swipe vers la droite ──
+      // Retour accueil depuis n'importe quelle app (sauf si on est déjà à l'accueil)
+      if(pid!=='homePage'&&pid!=='authPage'){
+        // Dans le bloc-notes : fermer l'éditeur d'abord
+        if(pid==='notesPage'&&document.getElementById('notesEditor').style.display!=='none'){
+          closeNoteEditor();showHint();return;
         }
         // Dans l'horloge : onglet précédent
         if(pid==='clockPage'){swipeClockTab(-1);return;}
         // Dans la calc : onglet précédent
         if(pid==='calcPage'){swipeCalcTab(-1);return;}
-        // Dans notes : fermer l'éditeur
-        if(pid==='notesPage'&&document.getElementById('notesEditor').style.display!=='none'){closeNoteEditor();return;}
-      } else {
-        // ← gauche
-        if(pid==='clockPage'){swipeClockTab(1);return;}
-        if(pid==='calcPage'){swipeCalcTab(1);return;}
-        if(pid==='homePage'){
-          showSwipeHint('right');
-          // Ouvrir la dernière app utilisée (ou ChatRoom)
-          goToApp('chat');return;
-        }
+        // Sinon : retour à l'accueil
+        showHint();backToHome();
       }
-    }
-
-    if(isV){
-      // ── Swipe vertical ──
-      if(dy<0){
-        // ↑ vers le haut
-        if(pid==='homePage'){
-          // Scroll vers les apps (rien de spécial, le scroll CSS gère)
-        }
-        if(pid==='notesPage'&&document.getElementById('notesListView').style.display!=='none'&&_notesState.currentNotebook){
-          createNote();return;
-        }
-      } else {
-        // ↓ vers le bas : fermer les panels ouverts
-        if(document.querySelector('.modal-ov.open')){
-          var open=document.querySelector('.modal-ov.open');
-          open.classList.remove('open');return;
-        }
-        if(document.querySelector('.panel-overlay.open')){
-          var panel=document.querySelector('.panel-overlay.open');
-          panel.classList.remove('open');return;
-        }
-      }
+    } else {
+      // ── Swipe vers la gauche ──
+      if(pid==='clockPage'){swipeClockTab(1);return;}
+      if(pid==='calcPage'){swipeCalcTab(1);return;}
     }
   },{passive:true});
 
-  // Swipe onglets horloge
-  var clockTabs=['clock','timer','stopwatch','alarm'];
+  /* Onglets horloge */
+  var clockOrder=['clock','timer','stopwatch','alarm'];
   function swipeClockTab(dir){
-    var cur=clockTabs.findIndex(function(t){var p=document.getElementById('clockPanel'+t.charAt(0).toUpperCase()+t.slice(1));return p&&p.style.display!=='none';});
+    var map={'clock':'Clock','timer':'Timer','stopwatch':'Stopwatch','alarm':'Alarm'};
+    var cur=clockOrder.findIndex(function(t){
+      var p=document.getElementById('clockPanel'+map[t]);
+      return p&&p.style.display!=='none';
+    });
     if(cur===-1)cur=0;
-    var next=(cur+dir+clockTabs.length)%clockTabs.length;
-    switchClockTab(clockTabs[next]);
-    showSwipeHint(dir>0?'right':'left');
+    var next=(cur+dir+clockOrder.length)%clockOrder.length;
+    switchClockTab(clockOrder[next]);
+    showHint();
   }
 
-  // Swipe onglets calc
-  var calcTabsList=['std','sci','conv'];
+  /* Onglets calculatrice */
+  var calcOrder=['std','sci','conv'];
   function swipeCalcTab(dir){
-    var cur=calcTabsList.findIndex(function(t){return document.getElementById('calc'+t.charAt(0).toUpperCase()+t.slice(1)).style.display!=='none';});
+    var map={std:'Std',sci:'Sci',conv:'Conv'};
+    var cur=calcOrder.findIndex(function(t){
+      var p=document.getElementById('calc'+t.charAt(0).toUpperCase()+t.slice(1));
+      return p&&p.style.display!=='none';
+    });
     if(cur===-1)cur=0;
-    var next=(cur+dir+calcTabsList.length)%calcTabsList.length;
-    switchCalcTab(calcTabsList[next]);
-    showSwipeHint(dir>0?'right':'left');
+    var next=(cur+dir+calcOrder.length)%calcOrder.length;
+    switchCalcTab(calcOrder[next]);
+    showHint();
   }
 })();
 
