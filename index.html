@@ -32,6 +32,18 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);displa
 .hide{display:none!important}
 .page{display:none;width:100%;flex:1;min-height:0;flex-direction:column}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
+@keyframes aiDot{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
+.ai-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);display:inline-block;animation:aiDot 1s infinite ease-in-out}
+.ai-msg-user{align-self:flex-end;background:var(--accent);color:#fff;border-radius:18px 18px 4px 18px;padding:10px 14px;max-width:80%;font-size:14px;line-height:1.5;word-break:break-word}
+.ai-msg-bot{align-self:flex-start;background:var(--s2);border:1px solid var(--border);border-radius:18px 18px 18px 4px;padding:10px 14px;max-width:85%;font-size:14px;line-height:1.6;word-break:break-word}
+.ai-msg-bot pre{background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:10px;overflow-x:auto;font-size:12px;margin:6px 0}
+.ai-msg-bot code{background:var(--s1);padding:2px 5px;border-radius:4px;font-size:12px}
+.ai-mode-btn{background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:14px 10px;cursor:pointer;text-align:center;transition:all .15s;display:flex;flex-direction:column;gap:6px;align-items:center}
+.ai-mode-btn:active{transform:scale(.96)}
+.ai-mode-btn.selected{border-color:var(--accent);background:rgba(109,40,217,.15)}
+.ai-mode-btn .mode-icon{font-size:28px}
+.ai-mode-btn .mode-name{font-size:12px;font-weight:700}
+.ai-mode-btn .mode-desc{font-size:10px;color:var(--muted)}
 .cbtn{background:var(--s2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:20px;font-weight:700;padding:14px 8px;cursor:pointer;transition:all .15s;font-family:'Sora',sans-serif;touch-action:manipulation}
 .cbtn:active{transform:scale(.93);background:var(--s3)}
 .cbtn-fn{background:var(--s1);color:var(--muted);font-size:13px}
@@ -457,6 +469,73 @@ input:focus,textarea:focus{outline:none}
     </div>
     <div id="novaShopItems" style="max-height:55vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px"></div>
     <div class="modal-acts"><button class="btn btn-ghost" onclick="closeModal('novaShopModal')">Fermer</button></div>
+  </div>
+</div>
+
+<!-- AI PAGE -->
+<div class="page" id="aiPage" style="flex-direction:column;background:var(--bg)">
+  <div class="home-top">
+    <button class="h-ibtn" onclick="backToHome()">🏠</button>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center">
+      <span style="font-weight:800;font-size:14px">🤖 Assistant IA</span>
+      <span id="aiModelLabel" style="font-size:10px;color:var(--muted)">Pollinations AI · GPT-4o</span>
+    </div>
+    <button class="h-ibtn" onclick="clearAIChat()" title="Effacer la conversation">🗑️</button>
+    <button class="h-ibtn" onclick="openAISettings()" title="Paramètres">⚙️</button>
+  </div>
+
+  <!-- Sélecteur de personnalité (première fois) -->
+  <div id="aiWelcome" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;text-align:center">
+    <div style="font-size:56px">🤖</div>
+    <h2 style="font-size:20px;font-weight:800">Assistant IA</h2>
+    <p style="color:var(--muted);font-size:13px;max-width:280px;line-height:1.6">Choisis un mode pour commencer. Gratuit, sans pub, sans compte.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:320px" id="aiModeGrid"></div>
+    <button class="btn-main" style="max-width:200px;margin-top:4px" onclick="startAI()">💬 Commencer</button>
+  </div>
+
+  <!-- Zone de chat -->
+  <div id="aiChatZone" style="flex:1;display:none;flex-direction:column;min-height:0">
+    <div id="aiMessages" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:0"></div>
+    <div id="aiTyping" style="display:none;padding:0 14px 8px">
+      <div style="display:inline-flex;align-items:center;gap:8px;background:var(--s2);border:1px solid var(--border);border-radius:16px;padding:10px 14px">
+        <span style="font-size:14px">🤖</span>
+        <div style="display:flex;gap:4px">
+          <span class="ai-dot"></span><span class="ai-dot" style="animation-delay:.2s"></span><span class="ai-dot" style="animation-delay:.4s"></span>
+        </div>
+      </div>
+    </div>
+    <div style="padding:10px 14px;padding-bottom:calc(10px + env(safe-area-inset-bottom, 0px));border-top:1px solid var(--border);display:flex;gap:8px;background:var(--s1)">
+      <textarea id="aiInput" placeholder="Envoie un message…" rows="1"
+        style="flex:1;background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:10px 14px;color:var(--text);font-size:14px;font-family:'Sora',sans-serif;resize:none;outline:none;max-height:120px;overflow-y:auto"
+        oninput="autoResize(this)"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAIMessage();}"></textarea>
+      <button onclick="sendAIMessage()" style="background:var(--accent);border:none;border-radius:12px;width:42px;height:42px;color:#fff;font-size:18px;cursor:pointer;flex-shrink:0;align-self:flex-end;display:flex;align-items:center;justify-content:center">➤</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI SETTINGS MODAL -->
+<div class="modal-ov" id="aiSettingsModal">
+  <div class="modal" style="max-width:380px">
+    <h3>⚙️ Paramètres IA</h3>
+    <div class="fg"><label>Mode / Personnalité</label>
+      <select id="aiModeSelect" onchange="changeAIMode(this.value)" style="width:100%;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:10px;color:var(--text);font-size:13px"></select>
+    </div>
+    <div class="fg"><label>Langue de réponse</label>
+      <select id="aiLangSelect" style="width:100%;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:10px;color:var(--text);font-size:13px">
+        <option value="fr">🇫🇷 Français</option>
+        <option value="en">🇬🇧 English</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="ar">🇸🇦 العربية</option>
+      </select>
+    </div>
+    <div class="fg"><label>Instruction personnalisée</label>
+      <textarea id="aiCustomPrompt" placeholder="Ex: Tu es un expert en musique rap…" rows="3" style="width:100%;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:10px;color:var(--text);font-size:13px;resize:none;font-family:'Sora',sans-serif"></textarea>
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ok" onclick="saveAISettings()">💾 Sauvegarder</button>
+      <button class="btn btn-ghost" onclick="closeModal('aiSettingsModal')">Fermer</button>
+    </div>
   </div>
 </div>
 
@@ -2252,7 +2331,8 @@ var APPS=[
   {id:'calc',name:'Calculatrice',icon:'🧮'},
   {id:'nova',name:'Nova Strike',icon:'🚀'},
   {id:'clock',name:'Horloge',icon:'🕐'},
-  {id:'notes',name:'Bloc-notes',icon:'📝'}
+  {id:'notes',name:'Bloc-notes',icon:'📝'},
+  {id:'ai',name:'Assistant IA',icon:'🤖'}
 ];
 
 function backToHome(){
@@ -2271,6 +2351,7 @@ function goToApp(id){
   else if(id==='nova'){goToNova();}
   else if(id==='clock'){goToClock();}
   else if(id==='notes'){goToNotes();}
+  else if(id==='ai'){goToAI();}
 }
 
 function renderHome(){
@@ -4784,6 +4865,227 @@ function confirmShareNote(){
     showHint();
   }
 })();
+
+/* ══════════════════════════════
+   ASSISTANT IA (Pollinations AI - gratuit, sans clé)
+══════════════════════════════ */
+var AI_MODES=[
+  {id:'assistant',name:'Assistant',icon:'🤖',desc:'Aide générale',prompt:'Tu es un assistant intelligent, utile et sympathique. Réponds de façon claire et concise.'},
+  {id:'tutor',name:'Prof',icon:'🎓',desc:'Explique tout',prompt:'Tu es un professeur patient et pédagogue. Explique les concepts de façon simple avec des exemples.'},
+  {id:'dev',name:'Dev',icon:'💻',desc:'Code & tech',prompt:'Tu es un expert développeur. Tu aides avec le code, les bugs et les concepts techniques. Formate le code avec des blocs de code.'},
+  {id:'creative',name:'Créatif',icon:'✨',desc:'Écriture & idées',prompt:'Tu es un assistant créatif. Tu aides pour l\'écriture, le storytelling, les idées créatives et la brainstorming.'},
+  {id:'coach',name:'Coach',icon:'💪',desc:'Motivation',prompt:'Tu es un coach de vie motivant et positif. Tu aides à atteindre les objectifs et tu donnes des conseils de développement personnel.'},
+  {id:'chef',name:'Chef',icon:'👨‍🍳',desc:'Cuisine & recettes',prompt:'Tu es un chef cuisinier expert. Tu proposes des recettes, des conseils culinaires et des techniques de cuisine.'},
+  {id:'gamer',name:'Gamer',icon:'🎮',desc:'Jeux vidéo',prompt:'Tu es un expert en jeux vidéo. Tu connais tous les jeux, les stratégies, les tips et l\'actualité gaming.'},
+  {id:'fun',name:'Détente',icon:'😄',desc:'Blagues & fun',prompt:'Tu es drôle et décontracté. Tu fais des blagues, tu joues avec les mots et tu gardes l\'ambiance légère et fun.'}
+];
+
+var _aiState={
+  mode:'assistant',
+  lang:'fr',
+  messages:[],
+  customPrompt:'',
+  loading:false
+};
+
+function goToAI(){
+  showPage('aiPage');
+  renderAIModeGrid();
+  loadAISettings();
+  var savedMode=localStorage.getItem('siteapp_ai_mode');
+  if(savedMode){
+    _aiState.mode=savedMode;
+    var savedHistory=JSON.parse(localStorage.getItem('siteapp_ai_history')||'[]');
+    if(savedHistory.length>0){
+      _aiState.messages=savedHistory;
+      document.getElementById('aiWelcome').style.display='none';
+      document.getElementById('aiChatZone').style.display='flex';
+      renderAIMessages();
+      return;
+    }
+  }
+  document.getElementById('aiWelcome').style.display='flex';
+  document.getElementById('aiChatZone').style.display='none';
+}
+
+function renderAIModeGrid(){
+  var grid=document.getElementById('aiModeGrid');grid.innerHTML='';
+  var sel=document.getElementById('aiModeSelect');if(sel)sel.innerHTML='';
+  AI_MODES.forEach(function(m){
+    var btn=document.createElement('div');btn.className='ai-mode-btn'+(m.id===_aiState.mode?' selected':'');
+    btn.innerHTML='<span class="mode-icon">'+m.icon+'</span><span class="mode-name">'+m.name+'</span><span class="mode-desc">'+m.desc+'</span>';
+    btn.onclick=function(){_aiState.mode=m.id;document.querySelectorAll('.ai-mode-btn').forEach(function(b){b.classList.remove('selected');});btn.classList.add('selected');};
+    grid.appendChild(btn);
+    if(sel){var opt=document.createElement('option');opt.value=m.id;opt.textContent=m.icon+' '+m.name;sel.appendChild(opt);}
+  });
+}
+
+function startAI(){
+  _aiState.messages=[];
+  localStorage.setItem('siteapp_ai_history','[]');
+  localStorage.setItem('siteapp_ai_mode',_aiState.mode);
+  document.getElementById('aiWelcome').style.display='none';
+  document.getElementById('aiChatZone').style.display='flex';
+  var mode=AI_MODES.find(function(m){return m.id===_aiState.mode;})||AI_MODES[0];
+  document.getElementById('aiModelLabel').textContent=mode.icon+' '+mode.name+' · Pollinations AI';
+  // Message de bienvenue
+  var welcome='Bonjour ! Je suis ton '+mode.name+' IA. '+getWelcomeMsg(mode.id);
+  addAIMessage('assistant',welcome);
+}
+
+function getWelcomeMsg(id){
+  var msgs={
+    assistant:'Comment puis-je t\'aider aujourd\'hui ?',
+    tutor:'Qu\'est-ce que tu voudrais apprendre ou comprendre ?',
+    dev:'Quel problème de code veux-tu résoudre ?',
+    creative:'Sur quoi veux-tu qu\'on travaille ensemble ?',
+    coach:'Quel est ton objectif du moment ?',
+    chef:'Tu veux une recette ou des conseils culinaires ?',
+    gamer:'Quel jeu tu veux qu\'on discute ?',
+    fun:'Prêt à se marrer ? 😄'
+  };
+  return msgs[id]||'Comment puis-je t\'aider ?';
+}
+
+function sendAIMessage(){
+  if(_aiState.loading)return;
+  var input=document.getElementById('aiInput');
+  var text=(input.value||'').trim();
+  if(!text)return;
+  input.value='';input.style.height='';
+  addAIMessage('user',text);
+  _aiState.messages.push({role:'user',content:text});
+  callPollinationsAI();
+}
+
+function addAIMessage(role,text){
+  var div=document.getElementById('aiMessages');
+  var msg=document.createElement('div');
+  msg.className=role==='user'?'ai-msg-user':'ai-msg-bot';
+  // Formatter le markdown basique
+  msg.innerHTML=formatAIText(text);
+  div.appendChild(msg);
+  div.scrollTop=div.scrollHeight;
+  // Sauvegarder l'historique (garder les 40 derniers)
+  if(role!=='system'){
+    var history=JSON.parse(localStorage.getItem('siteapp_ai_history')||'[]');
+    history.push({role:role,text:text});
+    if(history.length>40)history=history.slice(-40);
+    localStorage.setItem('siteapp_ai_history',JSON.stringify(history));
+  }
+}
+
+function formatAIText(text){
+  // Markdown basique
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/```(\w*)\n?([\s\S]*?)```/g,'<pre><code>$2</code></pre>')
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/\n/g,'<br>');
+}
+
+function callPollinationsAI(){
+  _aiState.loading=true;
+  document.getElementById('aiTyping').style.display='block';
+  var div=document.getElementById('aiMessages');
+  div.scrollTop=div.scrollHeight;
+
+  var mode=AI_MODES.find(function(m){return m.id===_aiState.mode;})||AI_MODES[0];
+  var langInstruction=_aiState.lang==='fr'?'Réponds toujours en français.':
+    _aiState.lang==='en'?'Always reply in English.':
+    _aiState.lang==='es'?'Responde siempre en español.':'أجب دائماً بالعربية.';
+  var systemPrompt=(_aiState.customPrompt||mode.prompt)+'\n'+langInstruction;
+
+  // Construire les messages (garder les 20 derniers pour le contexte)
+  var msgs=[{role:'system',content:systemPrompt}];
+  var history=_aiState.messages.slice(-20);
+  history.forEach(function(m){msgs.push({role:m.role,content:m.content});});
+
+  fetch('https://text.pollinations.ai/',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      messages:msgs,
+      model:'openai',
+      seed:Math.floor(Math.random()*999),
+      private:true
+    })
+  })
+  .then(function(r){
+    if(!r.ok)throw new Error('Erreur réseau '+r.status);
+    return r.text();
+  })
+  .then(function(text){
+    _aiState.loading=false;
+    document.getElementById('aiTyping').style.display='none';
+    var reply=text.trim();
+    _aiState.messages.push({role:'assistant',content:reply});
+    addAIMessage('assistant',reply);
+  })
+  .catch(function(err){
+    _aiState.loading=false;
+    document.getElementById('aiTyping').style.display='none';
+    addAIMessage('assistant','⚠️ Erreur de connexion à l\'IA. Vérifie ta connexion et réessaie.\n\n*Détail : '+err.message+'*');
+  });
+}
+
+function clearAIChat(){
+  if(!confirm('Effacer toute la conversation ?'))return;
+  _aiState.messages=[];
+  localStorage.removeItem('siteapp_ai_history');
+  document.getElementById('aiMessages').innerHTML='';
+  document.getElementById('aiWelcome').style.display='flex';
+  document.getElementById('aiChatZone').style.display='none';
+  renderAIModeGrid();
+}
+
+/* Paramètres IA */
+function openAISettings(){
+  var sel=document.getElementById('aiModeSelect');
+  if(sel)sel.value=_aiState.mode;
+  var lang=document.getElementById('aiLangSelect');
+  if(lang)lang.value=_aiState.lang;
+  var cp=document.getElementById('aiCustomPrompt');
+  if(cp)cp.value=_aiState.customPrompt;
+  renderAIModeGrid();
+  openModal('aiSettingsModal');
+}
+function changeAIMode(val){
+  _aiState.mode=val;
+  document.querySelectorAll('.ai-mode-btn').forEach(function(b){
+    b.classList.toggle('selected',b.querySelector('.mode-name').textContent===AI_MODES.find(function(m){return m.id===val;}).name);
+  });
+}
+function saveAISettings(){
+  _aiState.mode=document.getElementById('aiModeSelect').value;
+  _aiState.lang=document.getElementById('aiLangSelect').value;
+  _aiState.customPrompt=document.getElementById('aiCustomPrompt').value;
+  localStorage.setItem('siteapp_ai_mode',_aiState.mode);
+  localStorage.setItem('siteapp_ai_lang',_aiState.lang);
+  localStorage.setItem('siteapp_ai_customprompt',_aiState.customPrompt);
+  var mode=AI_MODES.find(function(m){return m.id===_aiState.mode;})||AI_MODES[0];
+  document.getElementById('aiModelLabel').textContent=mode.icon+' '+mode.name+' · Pollinations AI';
+  closeModal('aiSettingsModal');
+  toast('Paramètres sauvegardés ✅','ok');
+}
+function loadAISettings(){
+  _aiState.mode=localStorage.getItem('siteapp_ai_mode')||'assistant';
+  _aiState.lang=localStorage.getItem('siteapp_ai_lang')||'fr';
+  _aiState.customPrompt=localStorage.getItem('siteapp_ai_customprompt')||'';
+}
+function renderAIMessages(){
+  var div=document.getElementById('aiMessages');div.innerHTML='';
+  var history=JSON.parse(localStorage.getItem('siteapp_ai_history')||'[]');
+  history.forEach(function(m){
+    var msg=document.createElement('div');
+    msg.className=m.role==='user'?'ai-msg-user':'ai-msg-bot';
+    msg.innerHTML=formatAIText(m.text||'');
+    div.appendChild(msg);
+  });
+  div.scrollTop=div.scrollHeight;
+}
 
 function toggleMob(){document.getElementById('sidebar').classList.toggle('mob-open')}
 function closeMob(){document.getElementById('sidebar').classList.remove('mob-open')}
