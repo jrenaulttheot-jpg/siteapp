@@ -4890,22 +4890,19 @@ var _aiState={
 
 function goToAI(){
   showPage('aiPage');
-  renderAIModeGrid();
   loadAISettings();
-  var savedMode=localStorage.getItem('siteapp_ai_mode');
-  if(savedMode){
-    _aiState.mode=savedMode;
-    var savedHistory=JSON.parse(localStorage.getItem('siteapp_ai_history')||'[]');
-    if(savedHistory.length>0){
-      _aiState.messages=savedHistory;
-      document.getElementById('aiWelcome').style.display='none';
-      document.getElementById('aiChatZone').style.display='flex';
-      renderAIMessages();
-      return;
-    }
+  document.getElementById('aiWelcome').style.display='none';
+  document.getElementById('aiChatZone').style.display='flex';
+  var mode=AI_MODES.find(function(m){return m.id===_aiState.mode;})||AI_MODES[0];
+  document.getElementById('aiModelLabel').textContent=mode.icon+' '+mode.name+' · Pollinations AI';
+  var history=JSON.parse(localStorage.getItem('siteapp_ai_history')||'[]');
+  _aiState.messages=history.map(function(m){return{role:m.role,content:m.text||''};});
+  if(history.length>0){renderAIMessages();}
+  else{
+    var welcome='Bonjour ! Comment puis-je t\'aider ?';
+    addAIMessage('assistant',welcome);
+    _aiState.messages=[];
   }
-  document.getElementById('aiWelcome').style.display='flex';
-  document.getElementById('aiChatZone').style.display='none';
 }
 
 function renderAIModeGrid(){
